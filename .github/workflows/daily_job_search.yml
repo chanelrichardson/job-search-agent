@@ -1,0 +1,35 @@
+name: LaTonya Daily Job Search
+
+on:
+  schedule:
+    # Runs at 7:00 PM Eastern every day (23:00 UTC)
+    # Adjust if needed: https://crontab.guru
+    - cron: "0 23 * * *"
+
+  # Lets you trigger a manual run from the GitHub Actions tab anytime
+  workflow_dispatch:
+
+jobs:
+  run-job-agent:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install anthropic
+
+      - name: Run job search agent
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GMAIL_SENDER: ${{ secrets.GMAIL_SENDER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
+        run: python job_agent.py
