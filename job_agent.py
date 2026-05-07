@@ -57,6 +57,35 @@ Generate a realistic, detailed job search result set...
    - A direct apply URL
 2. Proactive Targets: List 3-5 organizations that don't have open roles but are a strong fit based on the candidate's profile. For each, provide:
    - Organization name, Sector, Email or LinkedIn contact type
+
+Respond ONLY with a valid JSON object (no markdown fences, no preamble). Structure:
+{{
+  "positive_message": "2-3 warm, specific, encouraging sentences for LaTonya referencing her career impact and today's date.",
+  "jobs": [
+    {{
+      "title": "Job Title",
+      "organization": "Company Name",
+      "type": "Full-time",
+      "location": "Remote / Hybrid — City, State / On-site — City, State",
+      "salary": "$160,000–$185,000 + bonus" or "Not listed",
+      "posted": "2 days ago",
+      "source": "LinkedIn / etc.",
+      "description": "2-3 sentence role summary.",
+      "why_fit": "2-3 sentences tying user's specific experience to this role.",
+      "network_angle": "1-2 sentences on any network leverage they may have.",
+      "apply_url": "https://..."
+    }}
+  ],
+  "proactive_targets": [
+    {{
+      "organization": "Organization Name",
+      "sector": "Tech / Association / Hospitality / Corporate",
+      "why": "2 sentences on fit and what kind of role to pitch.",
+      "approach": "1 sentence on how to reach out.",
+      "contact_type": "e.g. VP of HR, Chief of Staff, Director of Operations"
+    }}
+  ]
+}}
 """
 
 # ── HTML email template ─────────────────────────────────────────────────────────
@@ -158,26 +187,9 @@ PROACTIVE_HTML = """
 </div>
 """
 
-
-def load_config():
-    """Reads the private resume file from the local directory."""
-    try:
-        with open("resume.txt", "r") as f:
-            resume = f.read()
-    except FileNotFoundError:
-        raise FileNotFoundError("Resume file not found. Please create a resume.txt file with the candidate's profile.")
-    try:
-        with open("criteria.json", "r") as f:
-            criteria = json.load(f)
-    except FileNotFoundError:
-        raise FileNotFoundError("Criteria file not found. Please create a criteria.json file.")
-    return resume, criteria
-    
-
 def run_search(today_str: str) -> dict:
     """Call Anthropic API with web search to generate job listings."""
     client = Anthropic(api_key=ANTHROPIC_API_KEY)
-    #r, c = load_config()
 
     prompt = SEARCH_PROMPT.format(
     name=CRITERIA_CONTENT["candidate_name"],
