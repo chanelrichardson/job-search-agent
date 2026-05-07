@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-LaTonya Broome — Daily Job Search Agent
-Runs nightly, searches for senior event executive roles,
+Daily Job Search Agent
+Runs weekly, searches for senior event executive roles,
 and sends a digest email via Gmail.
 """
 
@@ -14,7 +14,6 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from anthropic import Anthropic
 
-# ── Logging ────────────────────────────────────────────────────────────────────
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s  %(levelname)s  %(message)s",
@@ -25,13 +24,11 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
-# ── Config (edit these or set as environment variables) ────────────────────────
 ANTHROPIC_API_KEY   = os.getenv("ANTHROPIC_API_KEY", "YOUR_ANTHROPIC_API_KEY_HERE")
 GMAIL_SENDER        = os.getenv("GMAIL_SENDER", "sender@gmail.com")          # Gmail you send FROM
 GMAIL_APP_PASSWORD  = os.getenv("GMAIL_APP_PASSWORD", "xxxx xxxx xxxx xxxx") # Gmail App Password (not your real password)
-RECIPIENT_EMAIL     = os.getenv("RECIPIENT_EMAIL", "mslatonyabroome@gmail.com")
+RECIPIENT_EMAIL     = os.getenv("RECIPIENT_EMAIL", "recipient@gmail.com")
 
-# ── Candidate profile (baked in from resume) ───────────────────────────────────
 RESUME_SUMMARY = """
 Name: LaTonya Broome | Location: Winston-Salem, NC
 Title: Executive Leader | Event Ecosystems | Operations & Revenue Strategy
