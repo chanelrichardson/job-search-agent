@@ -1,0 +1,13 @@
+
+
+{
+  "candidate_name": "Max Caufield",
+  "target_titles": ["Photographer", "Photojournalist", "Freelance Photographer", "Visual Storyteller"],
+  "min_salary": "$50,000",
+  "location_preference": "In or near Arcadia Bay, Oregon",
+  "industry_focus": ["Media", "Publishing", "Creative Agencies", "Nonprofits"],
+  "experience_level": "Mid-Level (5-10 years)",
+  "special_instructions": "Focus on roles that allow for creative freedom and storytelling through imagery.",
+  "recency_days": 7,
+  "exclude_keywords": ["Entry Level", "Intern", "Assistant"]
+}

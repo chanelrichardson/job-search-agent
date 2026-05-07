@@ -24,84 +24,37 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
-ANTHROPIC_API_KEY   = os.getenv("ANTHROPIC_API_KEY", "YOUR_ANTHROPIC_API_KEY_HERE")
-GMAIL_SENDER        = os.getenv("GMAIL_SENDER", "sender@gmail.com")          # Gmail you send FROM
-GMAIL_APP_PASSWORD  = os.getenv("GMAIL_APP_PASSWORD", "xxxx xxxx xxxx xxxx") # Gmail App Password (not your real password)
-RECIPIENT_EMAIL     = os.getenv("RECIPIENT_EMAIL", "recipient@gmail.com")
+ANTHROPIC_API_KEY   = os.getenv("ANTHROPIC_API_KEY")
+GMAIL_SENDER        = os.getenv("GMAIL_SENDER")
+GMAIL_APP_PASSWORD  = os.getenv("GMAIL_APP_PASSWORD")
+RECIPIENT_EMAIL     = os.getenv("RECIPIENT_EMAIL")
 
-RESUME_SUMMARY = """
-Name: LaTonya Broome | Location: Winston-Salem, NC
-Title: Executive Leader | Event Ecosystems | Operations & Revenue Strategy
-Experience: 30+ years across corporate, nonprofit, SaaS, and hospitality environments
-
-Current Role: Director, General Assembly & Conference Services — Unitarian Universalist Association (UUA), 2019–Present
-- Manages multi-million-dollar budgets and full event lifecycle for a 5,000-attendee flagship convention
-- Led 90-day transformation to fully virtual in 2020 (4,900 participants, record attendance)
-- Designed and implemented hybrid participation models; leads 180+ volunteers annually
-- Negotiated zero-penalty 2020 cancellation (<$20K loss); reduced $1.2M contract exposure to $400K (~$800K saved)
-
-Previous:
-- Founder/Principal — Event Experts (1992–Present): corporate events, trade shows, facility management, catering, equipment rental
-- Fractional EVP of Operations — West Third Street Management / iActive Learning (SaaS/EdTech): HR, marketing, vendor mgmt, webinar strategy, trade show presence at NAEYC
-- Director of Event Operations — Quaintance-Weaver Hotels & Restaurants: 25-person team, LEED Platinum property, corporate/nonprofit/social events
-
-Education: UNC Chapel Hill B.A. Speech Communications & Political Science; Law Studies at Wake Forest & Temple University
-Tools: Zoom, Whova, Momentus, Microsoft 365, Google Workspace, QuickBooks, Asana, AV Production
-"""
-
-SEARCH_PROMPT = """You are a senior executive job search agent for LaTonya Broome, a seasoned event industry executive.
+SEARCH_PROMPT = """ You are a senior executive job search agent for {name}.
 
 CANDIDATE PROFILE:
 {resume}
 
 SEARCH CRITERIA:
-- Target titles: Director of Global Events, Director of Meeting Planning, Head of Events, Director of Conferences, VP Events, Director of Event Strategy, Director of Corporate Events
-- Compensation: $150,000+ base, strong benefits
-- Sectors: corporate meetings/events, tech/global events, associations/foundations/research organizations
-- Location preference: fully remote OR hybrid within 30 miles of Winston-Salem NC. Relocation only for exceptional comp ($175K+) and outstanding benefits
-- Recency: roles posted within the last 7 days
-- Exclude: pure venue sales, junior planner roles, low-comp roles, event roles with no strategic ownership
+- Experience Level: {level}
+- Target titles: {titles}
+- Minimum Compensation: {salary}
+- Sectors: {sectors}
+- Location preference: {location}
+- Special Focus: {custom_ask}
 
-SOURCES TO SIMULATE: LinkedIn Jobs, PCMA Career Center (pcma.org), MPI Career Center (mpi.org), Association Forum (associationforum.org), RCMA Network (rcmaweb.org), company career pages for hospitality/association/tech employers, executive search firms (Korn Ferry, Spencer Stuart, Heidrick & Struggles, Helms & Associates)
+SOURCES: LinkedIn, Industry Boards, and Company Career Pages.
 
 TODAY: {today}
 
-Generate a realistic, detailed job search result set as if you searched all those sources today. Create specific, plausible job listings with real company names, detailed descriptions, and realistic salary bands. Vary sectors (some associations, some tech, some corporate), vary locations (some remote, some hybrid). All must be senior/director/VP level and $150K+.
-
-For application URLs: use real platform URLs (e.g. linkedin.com/jobs/view/..., careers.company.com, etc.)
-
-For the network angle: be specific to LaTonya — reference her UU/GA community, 30 years in the Triad/Southeast, hospitality connections (Quaintance-Weaver), association world, SaaS/edtech background, or PCMA/MPI membership likelihood.
-
-Respond ONLY with a valid JSON object (no markdown fences, no preamble). Structure:
-{{
-  "positive_message": "2-3 warm, specific, encouraging sentences for LaTonya referencing her career impact and today's date.",
-  "jobs": [
-    {{
-      "title": "Director of Global Events",
-      "organization": "Company Name",
-      "type": "Full-time",
-      "location": "Remote / Hybrid — City, State / On-site — City, State",
-      "salary": "$160,000–$185,000 + bonus" or "Not listed",
-      "posted": "2 days ago",
-      "source": "LinkedIn / PCMA Career Center / etc.",
-      "description": "2-3 sentence role summary.",
-      "why_fit": "2-3 sentences tying LaTonya's specific experience to this role.",
-      "network_angle": "1-2 sentences on any network leverage she may have.",
-      "apply_url": "https://..."
-    }}
-  ],
-  "proactive_targets": [
-    {{
-      "organization": "Organization Name",
-      "sector": "Tech / Association / Hospitality / Corporate",
-      "why": "2 sentences on fit and what kind of role to pitch.",
-      "approach": "1 sentence on how to reach out.",
-      "contact_type": "e.g. VP of HR, Chief of Staff, Director of Operations"
-    }}
-  ]
-}}
-
-Generate 6-8 job listings and exactly 5 proactive targets.
+Generate a realistic, detailed job search result set...
+1. Matched Roles: List 3-5 roles that best fit the criteria. For each role, provide:
+   - Title, Organization, Location, Salary, Posted Date, Source
+   - A brief description of the role
+   - Why it fits the candidate's profile
+   - A potential network angle (e.g., "Alumni from X university work here")
+   - A direct apply URL
+2. Proactive Targets: List 3-5 organizations that don't have open roles but are a strong fit based on the candidate's profile. For each, provide:
+   - Organization name, Sector, Email or LinkedIn contact type
 """
 
 # ── HTML email template ─────────────────────────────────────────────────────────
@@ -165,7 +118,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
     <hr class="divider">
     <div class="footer">
-      <p>Filtered for $150K+ &nbsp;·&nbsp; Remote / Hybrid ≤30mi Winston-Salem NC &nbsp;·&nbsp; Posted within 7 days</p>
+      <p>Filtered for {salary}+ &nbsp;·&nbsp; {location} &nbsp;·&nbsp; Posted within {recency} days</p>
       <p style="margin-top:4px;">Digest generated by your personal job search agent.</p>
     </div>
   </div>
@@ -204,11 +157,38 @@ PROACTIVE_HTML = """
 """
 
 
+def load_config():
+    """Reads the private resume file from the local directory."""
+    try:
+        with open("resume.json", "r") as f:
+            resume = json.load(f)
+    except FileNotFoundError:
+        return "No resume found. Please create a resume.txt file."
+    try:
+        with open("criteria.txt", "r") as f:
+            criteria = f.read()
+    except FileNotFoundError:
+        return "No criteria found. Please create a criteria.json file."
+
+    return resume, criteria
+    
+
 def run_search(today_str: str) -> dict:
     """Call Anthropic API with web search to generate job listings."""
     client = Anthropic(api_key=ANTHROPIC_API_KEY)
+    resume_content, c = load_config()
 
-    prompt = SEARCH_PROMPT.format(resume=RESUME_SUMMARY, today=today_str)
+    prompt = SEARCH_PROMPT.format(
+        name=c["candidate_name"],
+        resume=resume_content,
+        level=c["experience_level"],
+        titles=", ".join(c["target_titles"]),
+        salary=c["min_salary"],
+        sectors=", ".join(c["industry_focus"]),
+        location=c["location_preference"],
+        custom_ask=c["special_instructions"],
+        today=today_str
+    )
 
     log.info("Calling Anthropic API with web search enabled...")
     response = client.messages.create(
