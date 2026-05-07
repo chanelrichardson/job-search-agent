@@ -163,24 +163,23 @@ def load_config():
         with open("resume.txt", "r") as f:
             resume = f.read()
     except FileNotFoundError:
-        return "No resume found. Please create a resume.txt file."
+        raise FileNotFoundError("Resume file not found. Please create a resume.txt file with the candidate's profile.")
     try:
         with open("criteria.json", "r") as f:
             criteria = json.load(f)
     except FileNotFoundError:
-        return "No criteria found. Please create a criteria.json file."
-
+        raise FileNotFoundError("Criteria file not found. Please create a criteria.json file.")
     return resume, criteria
     
 
 def run_search(today_str: str) -> dict:
     """Call Anthropic API with web search to generate job listings."""
     client = Anthropic(api_key=ANTHROPIC_API_KEY)
-    resume_content, c = load_config()
+    r, c = load_config()
 
     prompt = SEARCH_PROMPT.format(
         name=c["candidate_name"],
-        resume=resume_content,
+        resume=r,
         level=c["experience_level"],
         titles=", ".join(c["target_titles"]),
         salary=c["min_salary"],
