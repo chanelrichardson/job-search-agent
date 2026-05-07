@@ -160,13 +160,13 @@ PROACTIVE_HTML = """
 def load_config():
     """Reads the private resume file from the local directory."""
     try:
-        with open("resume.json", "r") as f:
-            resume = json.load(f)
+        with open("resume.txt", "r") as f:
+            resume = f.read()
     except FileNotFoundError:
         return "No resume found. Please create a resume.txt file."
     try:
-        with open("criteria.txt", "r") as f:
-            criteria = f.read()
+        with open("criteria.json", "r") as f:
+            criteria = json.load(f)
     except FileNotFoundError:
         return "No criteria found. Please create a criteria.json file."
 
