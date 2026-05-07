@@ -32,4 +32,6 @@ jobs:
           GMAIL_SENDER: ${{ secrets.GMAIL_SENDER }}
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
           RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
+          RESUME_CONTENT: ${{ secrets.RESUME_CONTENT }}
+          CRITERIA_CONTENT: ${{ secrets.CRITERIA_CONTENT }}
         run: python job_agent.py

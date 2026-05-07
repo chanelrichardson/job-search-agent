@@ -28,6 +28,8 @@ ANTHROPIC_API_KEY   = os.getenv("ANTHROPIC_API_KEY")
 GMAIL_SENDER        = os.getenv("GMAIL_SENDER")
 GMAIL_APP_PASSWORD  = os.getenv("GMAIL_APP_PASSWORD")
 RECIPIENT_EMAIL     = os.getenv("RECIPIENT_EMAIL")
+RESUME_CONTENT     = os.getenv("RESUME_CONTENT")
+CRITERIA_CONTENT   = json.loads(os.getenv("CRITERIA_CONTENT"))
 
 SEARCH_PROMPT = """ You are a senior executive job search agent for {name}.
 
@@ -175,17 +177,17 @@ def load_config():
 def run_search(today_str: str) -> dict:
     """Call Anthropic API with web search to generate job listings."""
     client = Anthropic(api_key=ANTHROPIC_API_KEY)
-    r, c = load_config()
+    #r, c = load_config()
 
     prompt = SEARCH_PROMPT.format(
-        name=c["candidate_name"],
-        resume=r,
-        level=c["experience_level"],
-        titles=", ".join(c["target_titles"]),
-        salary=c["min_salary"],
-        sectors=", ".join(c["industry_focus"]),
-        location=c["location_preference"],
-        custom_ask=c["special_instructions"],
+    name=CRITERIA_CONTENT["candidate_name"],
+        resume=RESUME_CONTENT,
+        level=CRITERIA_CONTENT["experience_level"],
+        titles=", ".join(CRITERIA_CONTENT["target_titles"]),
+        salary=CRITERIA_CONTENT["min_salary"],
+        sectors=", ".join(CRITERIA_CONTENT["industry_focus"]),
+        location=CRITERIA_CONTENT["location_preference"],
+        custom_ask=CRITERIA_CONTENT["special_instructions"],
         today=today_str
     )
 
