@@ -8,8 +8,6 @@ Many senior-level roles in specialized industries, such as high-end event planni
 
 Every Monday morning, the agent generates a personalized HTML report containing:
 
-**Direct Application Links:** Scraped from a curated list of industry-specific sites.
-
 **Role Descriptions:** Summarized for quick reading.
 
 **AI-Generated Fit Analysis:** An assessment of why the candidate is a strong match for each specific role.
@@ -27,15 +25,29 @@ The core logic resides in job_agent.py, which orchestrates the following flow:
 Prerequisites
 Python 3.x
 
+I run this using the YAML file in `.github\workflows`. 
+
+Set this up in GitHub actions. 
+
+This project works with the following GitHub secrets: 
+
 Anthropic API Key (for Claude-based analysis)
+SENDER_EMAIL (email address of the person sending the job search update)
+RECIPIENT_EMAIL (email address of the person receiving the update, both emails can be the same)
+RESUME_CONTENT (your resume)
+CRITERIA_CONTENT(criteria of what to search for in json format)
 
 Installation
 Clone the repository:
 
 Bash
 git clone https://github.com/chanelrichardson/job-agent.git
+
 Install dependencies:
-Bash
-pip install -r requirements.txt
+
+As the only requiremnent for this project is the Anthropic Python library, run 
+pip install anthropic 
+
+directly.
 
 Configure your environment variables in a .env file (see .env.example).
