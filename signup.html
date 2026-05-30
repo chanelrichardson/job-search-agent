@@ -156,7 +156,7 @@ textarea{resize:vertical;min-height:130px;line-height:1.6}
     <div class="grid2">
       <div class="field">
         <label>Full name</label>
-        <input type="text" id="f-name" placeholder="LaTonya Broome" autocomplete="name">
+        <input type="text" id="f-name" placeholder="Alex Jordan" autocomplete="name">
       </div>
       <div class="field">
         <label>Email address <span class="note">digest goes here</span></label>
@@ -195,7 +195,7 @@ textarea{resize:vertical;min-height:130px;line-height:1.6}
         </div>
       </div>
       <div class="chat-input-row">
-        <textarea id="chat-input" placeholder="I'm looking for Director or VP-level event roles, remote or hybrid near Winston-Salem NC, at least $150k..." rows="2" onkeydown="chatKeydown(event)"></textarea>
+        <textarea id="chat-input" placeholder="I'm looking for Director or VP-level roles in event strategy, remote or hybrid near Chicago, at least $130k, ideally in associations or tech..." rows="2" onkeydown="chatKeydown(event)"></textarea>
         <button class="send-btn" id="send-btn" onclick="sendMessage()" title="Send">
           <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
         </button>
@@ -242,13 +242,13 @@ textarea{resize:vertical;min-height:130px;line-height:1.6}
     <h1 class="title">Your profile is ready.</h1>
     <div class="warning-box">
       <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-      <div><strong>Make your repo private.</strong> This file contains your resume, email, and salary expectations. Go to your forked repo Settings and set visibility to Private before uploading.</div>
+      <div><strong>Your data stays private automatically.</strong> This file gets added as a GitHub Secret — encrypted, never visible in the repo, even if the repo is public.</div>
     </div>
     <div class="steps-box">
       <h3>3 steps to go live</h3>
       <ol>
         <li>Download your file below — it will be named <span class="code" id="fname-display">you.json</span></li>
-        <li>Fork <a href="https://github.com/chanelrichardson/job-agent" target="_blank">github.com/chanelrichardson/job-agent</a>, <strong>set it to private</strong>, then drag your file into the <span class="code">users/</span> folder on GitHub</li>
+        <li>Fork <a href="https://github.com/yourusername/job-agent" target="_blank">github.com/yourusername/job-agent</a>, then upload this file to the <span class="code">users/</span> folder on GitHub</li>
         <li>Go to Settings → Secrets → Actions and add: <span class="code">ANTHROPIC_API_KEY</span>, <span class="code">GMAIL_SENDER</span>, <span class="code">GMAIL_APP_PASSWORD</span></li>
       </ol>
     </div>
@@ -281,7 +281,7 @@ The <criteria> block must contain valid JSON with exactly this structure:
 {
   "target_titles": ["Job Title 1", "Job Title 2"],
   "min_salary": "$150,000",
-  "location_preference": "Remote or Hybrid within 30 miles of Winston-Salem, NC",
+  "location_preference": "Remote or Hybrid within 30 miles of Chicago, IL",
   "industry_focus": ["Industry1", "Industry2"],
   "experience_level": "Senior Executive (30+ years)",
   "special_instructions": "Specific focus areas, company types, must-haves",
