@@ -1,138 +1,127 @@
 # Job Search Agent
 
-A **multi-user, budget-optimized** AI job search pipeline. Each user gets a weekly email with matched roles, custom cover letters, and pre-filled application answers — all generated automatically.
-
-Built for senior executives. ~$0.05–0.15 per digest. Zero monthly hosting cost.
+Automated job search pipeline that emails curated roles with AI-written cover letters and pre-filled application answers. Runs on GitHub Actions — zero hosting cost.
 
 ---
 
-## How it works
+## Privacy setup — read this first
 
-```
-users/latonya.json ──┐
-users/marcus.json  ──┼──▶ GitHub Actions (Mon–Fri 8am ET)
-users/jane.json    ──┘          │
-                                ▼
-                    job_agent.py (runs all users)
-                         │
-                    Claude Haiku + Web Search
-                         │
-                    ┌────┴──────────────────┐
-                    │  Job search results   │
-                    │  Cover letters        │
-                    │  App pre-fill answers │
-                    └────────────────────────┘
-                         │
-                    Gmail SMTP ──▶ Each user's inbox
-```
+**Make your repo private.** User data (resumes, emails, salaries) is stored as GitHub Secrets, not committed files. But the repo itself should still be private.
 
-Each user profile has a `schedule` field. The agent runs every weekday but only sends digests to users whose schedule matches today:
-- `"daily"` → runs every weekday
-- `"weekly"` → runs every Monday
-- `"biweekly"` → runs 1st and 3rd Monday
-- `"monday"`, `"tuesday"`, etc. → runs on that specific day
+Go to: **Settings → General → Danger Zone → Change repository visibility → Private**
 
 ---
 
-## Setup
+## How to add a user
 
-### For non-technical users (the easy path)
+### Option A — Use the signup form (recommended for non-technical users)
 
-1. Open `signup.html` in your browser (or the hosted version)
-2. Fill out the 4-step form
-3. Download your `yourname.json` file
-4. Follow the 3 steps shown at the end
+Share the signup artifact (the Claude link) with anyone who needs to use the agent. They fill out a 4-step form:
+1. Name and email
+2. Resume (plain text)
+3. Describe what they're looking for in plain English — AI extracts titles, salary, location, industries, and which specific job boards to search
+4. Download their `yourname.json` file
 
-That's it. No coding needed.
+Then you (the repo owner) add their profile as a GitHub Secret:
 
----
+1. Open Settings → Secrets and variables → Actions → New repository secret
+2. Name it `USER_YOURNAME` (e.g. `USER_LATONYA`, `USER_MARCUS`) — all caps, no spaces
+3. Paste the entire contents of their JSON file as the value
+4. Save
 
-### For technical users / repo owners
+That's it. The agent automatically finds all secrets starting with `USER_` and processes each one.
 
-#### 1. Fork this repository
+### Option B — Add directly as a secret (technical users)
 
-#### 2. Add GitHub Secrets
-
-Go to **Settings → Secrets and variables → Actions → New repository secret**:
-
-| Secret | Value |
-|--------|-------|
-| `ANTHROPIC_API_KEY` | Your key from [console.anthropic.com](https://console.anthropic.com) |
-| `GMAIL_SENDER` | Gmail address that sends the digests |
-| `GMAIL_APP_PASSWORD` | Gmail App Password (not your regular password) |
-
-**Getting a Gmail App Password:**
-1. Enable 2-factor auth on the Gmail account
-2. Go to [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords)
-3. Create one named "Job Agent"
-
-#### 3. Add user profiles
-
-Drop JSON files into the `users/` directory. One file per user.
-
-```
-users/
-  latonya_broome.json
-  marcus_webb.json
-  your_name.json
-```
-
-#### 4. Enable GitHub Actions
-
-The workflow is in `.github/workflows/job_agent.yml`. It runs automatically at 8am ET on weekdays. You can also trigger it manually from the Actions tab.
-
----
-
-## User profile format
+Create a JSON profile following this structure and add it as a `USER_<NAME>` secret:
 
 ```json
 {
-  "name": "Jane Smith",
-  "email": "jane@example.com",
+  "name": "LaTonya Broome",
+  "email": "latonya@example.com",
   "schedule": "weekly",
   "resume": "Full resume text here...",
   "criteria": {
-    "target_titles": ["VP of Marketing", "CMO", "Head of Growth"],
-    "min_salary": "$200,000",
-    "location_preference": "Remote or Hybrid — near Chicago, IL",
-    "industry_focus": ["SaaS", "Fintech", "Media"],
-    "experience_level": "Senior Executive (20+ years)",
-    "special_instructions": "Prioritize B2B SaaS companies with Series B+",
+    "target_titles": ["Director of Global Events", "VP of Conferences"],
+    "min_salary": "$150,000",
+    "location_preference": "Remote or Hybrid within 30 miles of Winston-Salem, NC",
+    "industry_focus": ["Associations", "Events", "Hospitality", "Tech"],
+    "experience_level": "Senior Executive (30+ years)",
+    "special_instructions": "Focus on roles with strategic ownership and multi-million dollar budget management.",
     "recency_days": 7,
-    "exclude_keywords": ["Entry Level", "Intern", "Assistant"]
+    "exclude_keywords": ["Entry Level", "Intern", "Assistant", "Coordinator"]
   }
 }
 ```
 
 ---
 
-## Cost breakdown
+## Required GitHub Secrets
 
-| Component | Cost |
-|-----------|------|
-| Claude Haiku (job search + cover letters + app fill) | ~$0.04–0.12 per user per run |
-| GitHub Actions | Free (2,000 min/month, each run takes ~2–4 min) |
-| Gmail SMTP | Free |
-| **Total per user per week** | **~$0.05–0.15** |
+| Secret | Value |
+|--------|-------|
+| `ANTHROPIC_API_KEY` | From console.anthropic.com |
+| `GMAIL_SENDER` | Gmail address that sends digests |
+| `GMAIL_APP_PASSWORD` | Gmail App Password (not your login password) |
+| `USER_LATONYA` | LaTonya's full JSON profile |
+| `USER_YOURNAME` | Your full JSON profile |
 
-**Cost for 10 users running weekly:** ~$0.50–1.50/week (~$6–18/month)
+**Getting a Gmail App Password:**
+1. Enable 2-factor auth on the sending Gmail account
+2. Go to myaccount.google.com/apppasswords
+3. Create one called "Job Agent" — copy the 16-character code
 
-### Model choice
-The agent uses **Claude Haiku** (`claude-haiku-4-5`) by default — it's 15x cheaper than Sonnet and handles all tasks well. To switch to a more powerful model, change `MODEL` at the top of `agent/job_agent.py`.
+---
+
+## Schedule options
+
+Each user's `"schedule"` field controls when they get digests. The GitHub Action runs every weekday morning (8am ET) but only emails users whose schedule matches today.
+
+| Value | When it runs |
+|-------|-------------|
+| `"daily"` | Every weekday |
+| `"weekly"` | Every Monday |
+| `"biweekly"` | 1st and 3rd Monday |
+| `"monday"` / `"tuesday"` / etc. | That specific day |
 
 ---
 
 ## What's in each digest
 
 For each matched role:
-- **Role summary** — what the job actually is
-- **Why it fits you** — tied to your specific background
-- **Network angle** — who you might know or how to get a warm intro
-- **Cover letter** — custom-written, ready to paste
-- **Application quick-fill** — pre-written answers for common questions (Why interested? Biggest achievement? Leadership style?)
-- **Apply button** — direct link
+- Role summary and fit analysis tied to the candidate's specific background
+- Network angle — who they might know, how to get a warm intro
+- Cover letter — custom-written, 3 paragraphs, ready to paste
+- Application quick-fill — pre-written answers for common application questions
+- Direct apply link + source board link
 
-Plus **5 proactive targets** — organizations that don't have open roles but are a strong fit to reach out to cold.
+Plus 5 proactive outreach targets — organizations without open postings but strong fit.
+
+---
+
+## Which job boards does it search?
+
+The agent builds a source list from the user's industries. For example:
+- **Associations** → asaecenter.org, associationcareernetwork.com, nonprofitjobs.org
+- **Events/Meetings** → mpiweb.org, pcma.org, bizbash.com, smartmeetings.com, meetingsnet.com
+- **Hospitality** → hcareers.com, hospitalityonline.com, pcma.org
+- **Tech** → LinkedIn, Greenhouse, Lever, Wellfound, Hacker News Jobs
+- **Nonprofit** → idealist.org, devex.com, bridgespan.org
+- **General** → LinkedIn, Indeed, Glassdoor, ZipRecruiter (always included)
+
+The AI searches these sources specifically, not just "the web" — which means niche roles that never appear on aggregators get surfaced.
+
+---
+
+## Cost
+
+| Item | Cost |
+|------|------|
+| Claude Haiku per user per run | ~$0.05–0.15 |
+| GitHub Actions | Free (each run uses ~2–4 min of the 2,000 free min/month) |
+| Gmail SMTP | Free |
+
+Two users running weekly = ~$0.10–0.30/week = roughly $5–15/month total.
 
 ---
 
@@ -141,33 +130,17 @@ Plus **5 proactive targets** — organizations that don't have open roles but ar
 ```
 job-agent/
 ├── agent/
-│   └── job_agent.py          # Main agent (multi-user)
+│   └── job_agent.py      ← main agent (reads USER_* secrets)
 ├── users/
-│   ├── latonya_broome.json   # Example user profile
-│   └── marcus_webb.json      # Example user profile
+│   └── .gitkeep          ← placeholder; real profiles go in Secrets
 ├── .github/
 │   └── workflows/
-│       └── job_agent.yml     # GitHub Actions schedule
-├── signup.html               # Self-serve signup UI
+│       └── job_agent.yml ← runs Mon–Fri 8am ET
 └── README.md
 ```
 
 ---
 
-## Adding the signup page to GitHub Pages
+## Why GitHub Pages won't work for a private repo
 
-To host the signup form so others can self-serve:
-
-1. Go to **Settings → Pages**
-2. Set source to `main` branch, root `/`
-3. Your form will be at `https://yourusername.github.io/job-agent/signup.html`
-
-Users can fill out the form, download their JSON, and open a pull request (or email it to you) to be added.
-
----
-
-## Scaling considerations
-
-- **50+ users**: Consider splitting into multiple repositories or using a GitHub Action matrix to parallelize runs
-- **Deduplication**: The agent doesn't track previously seen jobs — each run is fresh. Add a `seen_jobs.json` per user if you want to suppress repeats
-- **Custom boards**: Edit the `SEARCH_PROMPT` to target specific job boards for niche industries
+GitHub Pages requires a public repo on the free plan. Since user data must stay private, the signup form is distributed as a Claude artifact instead — no hosting required. Anyone with the link can use it to generate their profile JSON, then send it to the repo owner to add as a secret.
