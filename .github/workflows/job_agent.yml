@@ -1,41 +1,30 @@
 name: Job Search Agent
 
 on:
-  # Run on a schedule — every morning at 8am ET (13:00 UTC)
-  # Each user profile controls its own day via the "schedule" field
   schedule:
-    - cron: '0 13 * * 1-5'   # Monday–Friday 8am ET
-
-  # Allow manual trigger from the GitHub Actions UI
+    - cron: '0 13 * * 1-5'   # Mon–Fri 8am ET
   workflow_dispatch:
 
 jobs:
-  run-agent:
+  run:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
-      - name: Install dependencies
-        run: pip install anthropic
-
-      - name: Run job search agent
+      - run: pip install anthropic
+      - name: Run agent
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          GMAIL_SENDER: ${{ secrets.GMAIL_SENDER }}
-          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          ANTHROPIC_API_KEY:   ${{ secrets.ANTHROPIC_API_KEY }}
+          GMAIL_SENDER:        ${{ secrets.GMAIL_SENDER }}
+          GMAIL_APP_PASSWORD:  ${{ secrets.GMAIL_APP_PASSWORD }}
+          GITHUB_TOKEN:        ${{ secrets.DATA_REPO_TOKEN }}
+          GITHUB_DATA_REPO:    ${{ secrets.GITHUB_DATA_REPO }}
         run: python agent/job_agent.py
-
-      - name: Upload log artifact
+      - uses: actions/upload-artifact@v4
         if: always()
-        uses: actions/upload-artifact@v4
         with:
-          name: job-agent-log-${{ github.run_number }}
+          name: agent-log-${{ github.run_number }}
           path: job_agent.log
           retention-days: 7

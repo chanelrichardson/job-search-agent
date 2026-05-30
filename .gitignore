@@ -1,8 +1,0 @@
-.env
-
-resume.txt
-criteria.json
-job_agent.log
-
-__pycache__/
-*.py[cod]

@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Job Search Agent — Sign Up</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;1,9..144,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0f0f0d;--s:#1a1a17;--s2:#242420;--b:#2e2e2a;--gold:#d4a843;--gdim:#8a6d2a;--gbg:#1e1a0f;--teal:#2dd4a0;--tdim:#1a7a5e;--tbg:#0a1f18;--tx:#e8e6de;--mu:#7a7870;--hi:#4a4a46;--r:10px;--rl:16px}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;font-size:15px;line-height:1.65}
+.page{display:grid;grid-template-columns:280px 1fr;min-height:100vh}
+.side{padding:40px 28px;display:flex;flex-direction:column;border-right:1px solid var(--b);position:sticky;top:0;height:100vh;overflow:hidden}
+.logo{font-family:'Fraunces',serif;font-size:22px;font-weight:300;color:var(--tx);margin-bottom:2px}
+.logo span{color:var(--gold)}
+.tag{font-size:11px;color:var(--hi);letter-spacing:.1em;text-transform:uppercase;margin-bottom:52px}
+.steps{display:flex;flex-direction:column;flex:1}
+.stp{display:flex;align-items:flex-start;gap:14px;padding:13px 0;position:relative}
+.stp:not(:last-child)::after{content:'';position:absolute;left:14px;top:44px;width:1px;height:calc(100% - 30px);background:var(--b)}
+.sn{width:29px;height:29px;border-radius:50%;border:1px solid var(--b);background:var(--s);color:var(--hi);font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;z-index:1;position:relative;transition:all .25s}
+.stp.active .sn{border-color:var(--gold);background:var(--gbg);color:var(--gold)}
+.stp.done .sn{border-color:var(--tdim);background:var(--tbg);color:var(--teal)}
+.stp.done .sn-num{display:none}
+.stp.done .sn::after{content:'✓';font-size:11px}
+.sm{padding-top:4px}
+.sm strong{display:block;font-size:13px;font-weight:500;color:var(--hi);transition:color .25s}
+.stp.active .sm strong{color:var(--tx)}
+.sm em{font-size:11px;color:var(--hi);font-style:normal}
+.sf{margin-top:auto;padding-top:24px;border-top:1px solid var(--b);font-size:12px;color:var(--hi);line-height:1.9}
+.ctag{display:inline-block;margin-top:6px;padding:2px 8px;border:1px solid var(--tdim);background:var(--tbg);color:var(--teal);font-size:11px;border-radius:4px}
+.canvas{padding:52px 60px 100px;max-width:760px}
+.prog{height:1px;background:var(--b);margin-bottom:52px;overflow:hidden}
+.pf{height:100%;background:var(--gold);transition:width .5s ease}
+.panel{display:none}
+.panel.active{display:block;animation:up .3s ease}
+@keyframes up{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.ey{font-size:11px;font-weight:500;color:var(--gold);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px}
+.h1{font-family:'Fraunces',serif;font-size:34px;font-weight:300;letter-spacing:-.025em;line-height:1.15;margin-bottom:12px}
+.h1 em{color:var(--gold);font-style:italic}
+.sub{font-size:14px;color:var(--mu);max-width:500px;margin-bottom:40px;line-height:1.7}
+.r2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.fd{display:flex;flex-direction:column;gap:7px;margin-bottom:20px}
+.fd label{font-size:12px;font-weight:500;color:var(--mu);letter-spacing:.03em}
+.fd label .n{font-weight:400;color:var(--hi);margin-left:4px}
+input[type=text],input[type=email],textarea,select{width:100%;padding:11px 15px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--tx);background:var(--s);border:1px solid var(--b);border-radius:var(--r);outline:none;transition:border-color .15s,box-shadow .15s;-webkit-appearance:none}
+input::placeholder,textarea::placeholder{color:var(--hi)}
+input:focus,textarea:focus,select:focus{border-color:var(--gdim);box-shadow:0 0 0 3px #d4a84318}
+textarea{resize:vertical;min-height:110px;line-height:1.6}
+select{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234a4a46'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:34px}
+select option{background:var(--s)}
+.uz{border:1px dashed var(--b);border-radius:var(--r);padding:28px 20px;text-align:center;cursor:pointer;transition:all .2s;position:relative;background:var(--s)}
+.uz:hover,.uz.drag{border-color:var(--gdim);background:var(--gbg)}
+.uz input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.ui{width:36px;height:36px;margin:0 auto 10px;color:var(--hi)}
+.ui svg{width:100%;height:100%;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.ul{font-size:14px;color:var(--mu);margin-bottom:4px}
+.uh{font-size:12px;color:var(--hi)}
+.ud{display:none;align-items:center;gap:10px;padding:10px 14px;background:var(--tbg);border:1px solid var(--tdim);border-radius:8px;margin-top:10px}
+.ud svg{width:16px;height:16px;stroke:var(--teal);fill:none;stroke-width:2;flex-shrink:0}
+.ud span{font-size:13px;color:var(--teal);font-weight:500}
+.ud button{margin-left:auto;background:none;border:none;cursor:pointer;color:var(--mu);font-size:18px;line-height:1}
+.cw{background:var(--s);border:1px solid var(--b);border-radius:var(--rl);overflow:hidden;margin-bottom:20px}
+.cm{padding:20px;display:flex;flex-direction:column;gap:14px;min-height:100px}
+.msg{display:flex;gap:10px;align-items:flex-start;animation:up .2s ease}
+.av{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;margin-top:2px}
+.msg.ai .av{background:var(--tbg);border:1px solid var(--tdim);color:var(--teal)}
+.msg.usr .av{background:var(--gbg);border:1px solid var(--gdim);color:var(--gold)}
+.bb{font-size:14px;line-height:1.65;padding:11px 15px;border-radius:10px;max-width:88%}
+.msg.ai .bb{background:var(--s2);color:var(--tx);border-bottom-left-radius:3px}
+.msg.usr .bb{background:var(--gbg);border:1px solid var(--gbg);color:var(--tx);border-bottom-right-radius:3px;margin-left:auto}
+.msg.usr{flex-direction:row-reverse}
+.ci{border-top:1px solid var(--b);display:flex;align-items:flex-end}
+.ci textarea{background:transparent;border:none;border-radius:0;min-height:50px;max-height:180px;resize:none;padding:14px 16px;font-size:14px;color:var(--tx)}
+.ci textarea:focus{border:none;box-shadow:none}
+.ci textarea::placeholder{color:var(--hi)}
+.sb{width:50px;height:50px;flex-shrink:0;background:var(--gold);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.sb:hover{background:#c49a3a}
+.sb:disabled{opacity:.35;cursor:not-allowed}
+.sb svg{width:16px;height:16px;stroke:#0f0f0d;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.dots{display:inline-flex;gap:4px;align-items:center;padding:11px 15px}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--mu);animation:blink 1.2s ease infinite}
+.dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,60%,100%{opacity:.3;transform:scale(1)}30%{opacity:1;transform:scale(1.2)}}
+.cb{background:var(--s);border:1px solid var(--b);border-radius:var(--r);padding:16px 20px;margin-bottom:20px}
+.cb h4{font-size:11px;font-weight:500;color:var(--mu);text-transform:uppercase;letter-spacing:.07em;margin-bottom:14px}
+.cg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ci2{background:var(--s2);border:1px solid var(--b);border-radius:8px;padding:10px 12px}
+.cl{font-size:10px;font-weight:500;color:var(--hi);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.cv{font-size:13px;color:var(--tx);line-height:1.4}
+.cv.e{color:var(--hi);font-style:italic}
+.sg{display:flex;flex-direction:column;gap:10px}
+.si{display:flex;align-items:flex-start;gap:13px;padding:15px 16px;border:1px solid var(--b);border-radius:var(--r);cursor:pointer;transition:all .15s;background:var(--s)}
+.si:hover{border-color:var(--gdim)}
+.si.on{border-color:var(--gdim);background:var(--gbg)}
+.sr{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--b);margin-top:2px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.si.on .sr{border-color:var(--gold);background:var(--gold)}
+.si.on .sr::after{content:'';width:6px;height:6px;border-radius:50%;background:var(--bg)}
+.st strong{display:block;font-size:14px;font-weight:500;color:var(--tx);margin-bottom:2px}
+.st span{font-size:13px;color:var(--mu)}
+.nav{display:flex;justify-content:space-between;align-items:center;margin-top:40px;padding-top:24px;border-top:1px solid var(--b)}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:11px 24px;border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;border:none;transition:all .15s}
+.bg{background:transparent;color:var(--mu);border:1px solid var(--b)}
+.bg:hover{color:var(--tx);border-color:var(--hi)}
+.bgo{background:var(--gold);color:#0f0f0d;font-weight:600;font-size:15px;padding:13px 30px}
+.bgo:hover{background:#c49a3a}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.ok-icon{width:56px;height:56px;background:var(--tbg);border:1px solid var(--tdim);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:24px}
+.ok-icon svg{width:26px;height:26px;stroke:var(--teal);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ic{background:var(--s);border:1px solid var(--b);border-radius:var(--rl);padding:20px 24px;margin-bottom:16px}
+.ic h3{font-size:11px;font-weight:500;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px}
+.ir{display:flex;justify-content:space-between;align-items:baseline;padding:8px 0;border-bottom:1px solid var(--b);font-size:14px}
+.ir:last-child{border-bottom:none}
+.ir .l{color:var(--mu)}
+.ir .v{color:var(--tx);font-weight:500;text-align:right;max-width:60%}
+.er{background:#1a0a0a;border:1px solid #5a1a1a;border-radius:var(--r);padding:12px 16px;font-size:13px;color:#f09090;margin-bottom:16px;display:none}
+.er.show{display:block}
+@media(max-width:820px){.page{grid-template-columns:1fr}.side{position:relative;height:auto;padding:24px 20px;border-right:none;border-bottom:1px solid var(--b)}.steps{display:none}.canvas{padding:28px 20px 80px}.r2{grid-template-columns:1fr}.cg{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="page">
+<aside class="side">
+  <div class="logo">Job<span>Agent</span></div>
+  <div class="tag">Personal career intelligence</div>
+  <div class="steps">
+    <div class="stp active" id="s1"><div class="sn"><span class="sn-num">1</span></div><div class="sm"><strong>About you</strong><em>Name &amp; email</em></div></div>
+    <div class="stp" id="s2"><div class="sn"><span class="sn-num">2</span></div><div class="sm"><strong>Your documents</strong><em>Resume &amp; cover letter</em></div></div>
+    <div class="stp" id="s3"><div class="sn"><span class="sn-num">3</span></div><div class="sm"><strong>What you want</strong><em>Describe in plain English</em></div></div>
+    <div class="stp" id="s4"><div class="sn"><span class="sn-num">4</span></div><div class="sm"><strong>Schedule</strong><em>How often to run</em></div></div>
+  </div>
+  <div class="sf">
+    Fill this out once. Every digest includes matched roles, a custom cover letter, and pre-filled application answers — automatically.
+    <div class="ctag">~$0.10 per weekly digest</div>
+  </div>
+</aside>
+
+<main class="canvas">
+  <div class="prog"><div class="pf" id="prog" style="width:25%"></div></div>
+
+  <div class="panel active" id="p1">
+    <div class="ey">Step 1 of 4</div>
+    <h1 class="h1">Let's start with <em>you.</em></h1>
+    <p class="sub">Basic info so your digest lands in the right inbox.</p>
+    <div class="r2">
+      <div class="fd"><label>Full name</label><input type="text" id="f-name" placeholder="Alex Jordan" autocomplete="name"></div>
+      <div class="fd"><label>Email <span class="n">where your digest goes</span></label><input type="email" id="f-email" placeholder="you@email.com" autocomplete="email"></div>
+    </div>
+    <div class="nav"><div></div><button class="btn bgo" onclick="next1()">Continue &rarr;</button></div>
+  </div>
+
+  <div class="panel" id="p2">
+    <div class="ey">Step 2 of 4</div>
+    <h1 class="h1">Upload your <em>documents.</em></h1>
+    <p class="sub">Your resume is used to write a tailored cover letter and pre-fill applications for every role we find. Your existing cover letter helps calibrate your voice and tone. Both are stored privately — never in the public repo.</p>
+    <div class="fd">
+      <label>Resume <span class="n">PDF, DOC, DOCX, or TXT</span></label>
+      <div class="uz" id="rz">
+        <input type="file" id="rf" accept=".pdf,.doc,.docx,.txt" onchange="fileChosen('r')">
+        <div class="ui"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+        <div class="ul">Drop your resume here or click to browse</div>
+        <div class="uh">PDF, DOC, DOCX, or TXT — up to 5MB</div>
+      </div>
+      <div class="ud" id="rd"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg><span id="rn"></span><button onclick="clearFile('r')">&times;</button></div>
+    </div>
+    <div class="fd" style="margin-top:8px">
+      <label>Cover letter <span class="n">optional — helps calibrate your writing voice</span></label>
+      <div class="uz" id="cz">
+        <input type="file" id="cf" accept=".pdf,.doc,.docx,.txt" onchange="fileChosen('c')">
+        <div class="ui"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
+        <div class="ul">Drop your cover letter here or click to browse</div>
+        <div class="uh">PDF, DOC, DOCX, or TXT — up to 5MB</div>
+      </div>
+      <div class="ud" id="cd"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg><span id="cn"></span><button onclick="clearFile('c')">&times;</button></div>
+    </div>
+    <div class="nav"><button class="btn bg" onclick="go(1)">&larr; Back</button><button class="btn bgo" onclick="go(3)">Continue &rarr;</button></div>
+  </div>
+
+  <div class="panel" id="p3">
+    <div class="ey">Step 3 of 4</div>
+    <h1 class="h1">Tell me what you're <em>looking for.</em></h1>
+    <p class="sub">Describe it like you'd explain it to a recruiter. Mention titles, salary, location, industries, company size, and anything specific. The more detail, the better the matches.</p>
+    <div class="cw">
+      <div class="cm" id="msgs">
+        <div class="msg ai"><div class="av">AI</div><div class="bb">Hi! Tell me about the kind of role you're looking for — titles, salary range, location preference, industries, company type, anything that matters. The more specific you are, the better I can target your search.</div></div>
+      </div>
+      <div class="ci">
+        <textarea id="ct" placeholder="I'm looking for Director or VP-level event management roles, remote or hybrid..." rows="2" onkeydown="ck(event)"></textarea>
+        <button class="sb" id="sb" onclick="send()" title="Send"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+      </div>
+    </div>
+    <div id="cw2" style="display:none">
+      <div class="cb"><h4>Extracted criteria — keep chatting to refine</h4><div class="cg" id="cg"></div></div>
+    </div>
+    <div class="nav"><button class="btn bg" onclick="go(2)">&larr; Back</button><button class="btn bgo" id="n3" onclick="go(4)" disabled>Continue &rarr;</button></div>
+  </div>
+
+  <div class="panel" id="p4">
+    <div class="ey">Step 4 of 4</div>
+    <h1 class="h1">How often should <em>we run?</em></h1>
+    <p class="sub">The agent checks new postings on your schedule and emails a fresh digest each time.</p>
+    <div class="sg">
+      <div class="si on" data-v="weekly" onclick="ps(this)"><div class="sr"></div><div class="st"><strong>Every Monday</strong><span>Best balance of signal and cost. Good starting point.</span></div></div>
+      <div class="si" data-v="daily" onclick="ps(this)"><div class="sr"></div><div class="st"><strong>Every weekday</strong><span>Maximum coverage for an active search. 5× the cost.</span></div></div>
+      <div class="si" data-v="biweekly" onclick="ps(this)"><div class="sr"></div><div class="st"><strong>Bi-weekly (1st &amp; 3rd Monday)</strong><span>Lightest cost. Good if you're passively exploring.</span></div></div>
+    </div>
+    <div class="er" id="serr"></div>
+    <div class="nav"><button class="btn bg" onclick="go(3)">&larr; Back</button><button class="btn bgo" id="subbtn" onclick="submit()"><span id="subl">Set up my agent &rarr;</span></button></div>
+  </div>
+
+  <div class="panel" id="p5">
+    <div class="ok-icon"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+    <div class="ey">You're set up</div>
+    <h1 class="h1">Your agent is <em>running.</em></h1>
+    <p class="sub" style="margin-bottom:28px">Your profile has been saved. Your first digest will arrive on your next scheduled run.</p>
+    <div class="ic" id="cc"><h3>Your profile</h3></div>
+    <div class="ic">
+      <h3>What happens next</h3>
+      <div class="ir"><span class="l">Resume</span><span class="v">Saved — used for every cover letter</span></div>
+      <div class="ir"><span class="l">Cover letter</span><span class="v">Saved — calibrates your writing voice</span></div>
+      <div class="ir"><span class="l">Each digest</span><span class="v">3–5 matched roles, tailored cover letter, application pre-fill</span></div>
+      <div class="ir"><span class="l">Boards searched</span><span class="v">LinkedIn, Indeed + niche boards for your industries</span></div>
+    </div>
+  </div>
+</main>
+</div>
+<script>
+let step=1,sched='weekly',crit=null,hist=[],rData={b:null,f:null},cData={b:null,f:null},ini='';
+const SYS=`You are a job search intake assistant. Extract structured criteria from the user's description.
+Respond with a brief acknowledgment (1-2 sentences), then a <criteria> JSON block.
+If salary, location, or titles are missing, ask for ONE specifically.
+
+<criteria> must be valid JSON:
+{"target_titles":["Title1","Title2"],"min_salary":"$130,000","location_preference":"Remote or Hybrid near Chicago, IL","industry_focus":["Associations","Tech"],"experience_level":"Senior (15 years)","special_instructions":"Nuanced requirements","recency_days":7,"exclude_keywords":["Entry Level","Intern","Assistant"]}
+
+Rules: include title variations; min_salary lower bound formatted "$X00,000"; industries from: Associations Tech Hospitality Events Nonprofit Healthcare Finance Fintech Media Education Government Corporate Consulting Legal; always include Entry Level Intern in excludes; capture deal-breakers and company preferences in special_instructions. Always output <criteria> block.`;
+
+function go(n){
+  document.getElementById(`p${step}`).classList.remove('active');
+  const s=document.getElementById(`s${step}`);
+  if(s){s.classList.remove('active');if(n>step)s.classList.add('done');}
+  step=n;
+  document.getElementById(`p${step}`).classList.add('active');
+  const sn=document.getElementById(`s${step}`);
+  if(sn){sn.classList.remove('done');sn.classList.add('active');}
+  document.getElementById('prog').style.width=`${(step/5)*100}%`;
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function next1(){
+  const nm=document.getElementById('f-name').value.trim();
+  const em=document.getElementById('f-email').value.trim();
+  if(!nm){document.getElementById('f-name').focus();return;}
+  if(!em||!em.includes('@')){document.getElementById('f-email').focus();return;}
+  ini=nm.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  go(2);
+}
+function ps(el){document.querySelectorAll('.si').forEach(i=>i.classList.remove('on'));el.classList.add('on');sched=el.dataset.v;}
+function fileChosen(w){
+  const inp=document.getElementById(w==='r'?'rf':'cf');
+  const file=inp.files[0];if(!file)return;
+  const rd=new FileReader();
+  rd.onload=e=>{
+    const b=e.target.result.split(',')[1];
+    if(w==='r'){rData={b,f:file.name};document.getElementById('rn').textContent=file.name;document.getElementById('rd').style.display='flex';document.getElementById('rz').style.display='none';}
+    else{cData={b,f:file.name};document.getElementById('cn').textContent=file.name;document.getElementById('cd').style.display='flex';document.getElementById('cz').style.display='none';}
+  };
+  rd.readAsDataURL(file);
+}
+function clearFile(w){
+  if(w==='r'){rData={b:null,f:null};document.getElementById('rf').value='';document.getElementById('rd').style.display='none';document.getElementById('rz').style.display='block';}
+  else{cData={b:null,f:null};document.getElementById('cf').value='';document.getElementById('cd').style.display='none';document.getElementById('cz').style.display='block';}
+}
+function ck(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}
+function addMsg(role,text,think){
+  const w=document.getElementById('msgs');
+  const d=document.createElement('div');d.className=`msg ${role}`;
+  const a=document.createElement('div');a.className='av';a.textContent=role==='ai'?'AI':(ini||'U');
+  const b=document.createElement('div');b.className='bb';
+  if(think)b.innerHTML='<div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
+  else b.textContent=text;
+  d.appendChild(a);d.appendChild(b);w.appendChild(d);w.scrollTop=w.scrollHeight;return d;
+}
+function showCrit(c){
+  crit=c;
+  const items=[
+    ['Titles',(c.target_titles||[]).slice(0,3).join(', ')+(c.target_titles?.length>3?` +${c.target_titles.length-3}`:'')],
+    ['Min salary',c.min_salary],['Location',c.location_preference],
+    ['Industries',(c.industry_focus||[]).join(', ')],
+    ['Experience',c.experience_level],['Posted within',`${c.recency_days||7} days`],
+  ];
+  document.getElementById('cg').innerHTML=items.map(([l,v])=>`<div class="ci2"><div class="cl">${l}</div><div class="cv ${v?'':'e'}">${v||'Not specified'}</div></div>`).join('');
+  document.getElementById('cw2').style.display='block';
+  document.getElementById('n3').disabled=false;
+}
+async function send(){
+  const t=document.getElementById('ct').value.trim();if(!t)return;
+  document.getElementById('ct').value='';document.getElementById('sb').disabled=true;
+  addMsg('usr',t);hist.push({role:'user',content:t});
+  const th=addMsg('ai','',true);
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-haiku-4-5',max_tokens:900,system:SYS,messages:hist})});
+    const d=await r.json();const raw=d.content?.[0]?.text||'';
+    hist.push({role:'assistant',content:raw});
+    const m=raw.match(/<criteria>([\s\S]*?)<\/criteria>/);
+    const ch=raw.replace(/<criteria>[\s\S]*?<\/criteria>/,'').trim();
+    th.remove();if(ch)addMsg('ai',ch);
+    if(m){try{showCrit(JSON.parse(m[1].trim()));}catch(_){}}
+  }catch(e){th.remove();addMsg('ai','Something went wrong. Please try again.');}
+  document.getElementById('sb').disabled=false;document.getElementById('ct').focus();
+}
+async function submit(){
+  const btn=document.getElementById('subbtn'),lbl=document.getElementById('subl'),err=document.getElementById('serr');
+  err.classList.remove('show');btn.disabled=true;lbl.textContent='Saving…';
+  const name=document.getElementById('f-name').value.trim();
+  const email=document.getElementById('f-email').value.trim();
+  const chatTxt=hist.filter(m=>m.role==='user').map(m=>m.content).join('\n');
+  try{
+    const res=await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,schedule:sched,naturalLanguageRequest:chatTxt||'No description provided.',resumeBase64:rData.b,resumeFilename:rData.f,coverLetterBase64:cData.b,coverLetterFilename:cData.f})});
+    const data=await res.json();
+    if(!res.ok)throw new Error(data.error||'Unknown error');
+    const c=data.criteria||crit||{};
+    const card=document.getElementById('cc');
+    const rows=[['Name',name],['Email',email],['Schedule',{weekly:'Every Monday',daily:'Every weekday',biweekly:'Bi-weekly'}[sched]||sched],['Top titles',(c.target_titles||[]).slice(0,2).join(', ')],['Min salary',c.min_salary||'—'],['Location',c.location_preference||'—'],['Resume',rData.f||'Not uploaded'],['Cover letter',cData.f||'Not uploaded']];
+    card.innerHTML='<h3>Your profile</h3>'+rows.map(([l,v])=>`<div class="ir"><span class="l">${l}</span><span class="v">${v}</span></div>`).join('');
+    go(5);
+  }catch(e){
+    err.textContent=e.message||'Failed to save. Please try again.';err.classList.add('show');
+    btn.disabled=false;lbl.textContent='Set up my agent →';
+  }
+}
+['rz','cz'].forEach(id=>{
+  const z=document.getElementById(id);
+  z.addEventListener('dragover',e=>{e.preventDefault();z.classList.add('drag');});
+  z.addEventListener('dragleave',()=>z.classList.remove('drag'));
+  z.addEventListener('drop',e=>{
+    e.preventDefault();z.classList.remove('drag');
+    const w=id==='rz'?'r':'c';
+    const inp=document.getElementById(w==='r'?'rf':'cf');
+    const dt=new DataTransfer();dt.items.add(e.dataTransfer.files[0]);inp.files=dt.files;fileChosen(w);
+  });
+});
+</script>
+</body>
+</html>

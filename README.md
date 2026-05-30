@@ -1,128 +1,138 @@
 # Job Search Agent
 
-An automated, AI-powered job search pipeline that delivers personalized weekly digests — matched roles, custom cover letters, and pre-filled application answers — directly to a candidate's inbox.
+An automated, AI-powered job search pipeline. Candidates sign up once via a hosted web form, upload their resume and cover letter, and receive a personalized weekly digest — matched roles, a tailored resume version, a custom cover letter, and pre-filled application answers — directly to their inbox.
 
-Built on GitHub Actions (free tier) with zero infrastructure cost. Supports multiple users simultaneously. Each user's data is stored as an encrypted GitHub Secret and never touches the repository.
-
----
-
-## What it does
-
-Every time the agent runs, it:
-
-1. **Searches industry-specific job boards** — not just LinkedIn. The source list is built from each user's industry preferences and includes 60+ niche boards: association career networks, hospitality job sites, meeting industry boards, tech-specific platforms, and more.
-2. **Filters and ranks results** against the user's criteria: titles, salary floor, location, recency, and any custom requirements.
-3. **Writes a cover letter** for each matched role — tailored to the candidate's specific background, not generic.
-4. **Pre-fills application answers** for common fields (why interested, biggest achievement, leadership style, salary expectations).
-5. **Sends a formatted HTML digest** to the user's inbox with everything in one place.
+**Stack:** Python · Claude API · GitHub Actions · Vercel · GitHub (private data repo)  
+**Cost:** ~$0.10–0.20 per user per weekly digest · Zero infrastructure cost
 
 ---
 
 ## Architecture
 
 ```
-GitHub Actions (cron: Mon–Fri 8am ET)
-        │
-        ▼
-agent/job_agent.py
-        │
-        ├── Reads user profiles from USER_* GitHub Secrets (encrypted)
-        │
-        ├── Builds industry-specific source list per user
-        │   └── 60+ boards: mpiweb.org, asaecenter.org, hcareers.com,
-        │       wellfound.com, idealist.org, linkedin.com, and more
-        │
-        ├── Claude Haiku + web_search → job matches (JSON)
-        │
-        ├── Claude Haiku → cover letter per role
-        │
-        ├── Claude Haiku → application pre-fill per role
-        │
-        └── Gmail SMTP → HTML email digest per user
+Candidate visits job-agent.vercel.app/signup
+  │  fills 4-step form: name/email, uploads resume + cover letter,
+  │  describes what they want in plain English, picks schedule
+  │
+  ▼
+Vercel serverless function (api/register.js)
+  │  ├─ Claude Haiku parses natural language → structured criteria (server-side)
+  │  └─ Commits profile.json + files to private data repo via GitHub API
+  │
+  ▼
+Private GitHub repo: job-agent-users/
+  └─ users/
+      ├─ alex_jordan/profile.json
+      ├─ alex_jordan/resume.pdf
+      └─ alex_jordan/cover_letter.pdf
+  
+GitHub Actions (public code repo, runs Mon–Fri 8am ET)
+  │  reads GITHUB_DATA_REPO secret → fetches all user folders
+  │  for each user whose schedule matches today:
+  │    ├─ Claude + web_search → 3-5 matched roles from industry-specific boards
+  │    ├─ Claude → tailored resume highlights per role
+  │    ├─ Claude → custom cover letter per role (matches candidate's voice)
+  │    ├─ Claude → pre-filled application answers per role
+  │    └─ Gmail SMTP → HTML digest to candidate's inbox
+  ▼
+Candidate's inbox
 ```
 
-**Model choice:** Claude Haiku throughout — approximately 15× cheaper than Sonnet with no meaningful quality difference for this task. Estimated cost: $0.05–0.15 per user per run.
+---
 
-**Multi-user:** The agent loads every environment variable starting with `USER_` and processes them in a single GitHub Actions run. Adding a new user is one new Secret — no code changes.
+## Repository structure
 
-**Scheduling:** Each user profile has a `schedule` field (`daily`, `weekly`, `biweekly`, or a day name). The agent runs every weekday but only emails users whose schedule matches today.
+This is the **public code repo** — it contains zero user data.
+
+```
+job-agent/                      ← public (safe for portfolio)
+├─ agent/
+│   └─ job_agent.py             ← main agent
+├─ signup-app/
+│   ├─ public/index.html        ← hosted signup form (Vercel)
+│   ├─ api/register.js          ← serverless API endpoint
+│   └─ vercel.json
+├─ .github/workflows/
+│   └─ job_agent.yml
+└─ README.md
+
+job-agent-users/                ← PRIVATE (never made public)
+└─ users/
+    ├─ alex_jordan/
+    │   ├─ profile.json
+    │   ├─ resume.pdf
+    │   └─ cover_letter.pdf
+    └─ ...
+```
 
 ---
 
 ## Setup
 
-### 1. Fork and set the repo to public or private
+### Step 1 — Create two GitHub repos
 
-The repo itself contains no user data — all profiles live in encrypted GitHub Secrets. It's safe to keep public.
+| Repo | Visibility | Purpose |
+|------|-----------|---------|
+| `job-agent` | Public | Code, signup form, GitHub Actions |
+| `job-agent-users` | **Private** | User profiles, resumes, cover letters |
 
-### 2. Add required secrets
+### Step 2 — Deploy the signup form to Vercel
 
-Go to **Settings → Secrets and variables → Actions → New repository secret**:
+1. Import `job-agent` into [vercel.com](https://vercel.com) (free plan)
+2. Set root directory to `signup-app`
+3. Add these environment variables in Vercel dashboard:
 
-| Secret name | Value |
-|-------------|-------|
-| `ANTHROPIC_API_KEY` | From [console.anthropic.com](https://console.anthropic.com) |
-| `GMAIL_SENDER` | Gmail address that sends the digests |
-| `GMAIL_APP_PASSWORD` | [Gmail App Password](https://myaccount.google.com/apppasswords) — not your login password |
+| Variable | Value |
+|----------|-------|
+| `GITHUB_TOKEN` | PAT with write access to `job-agent-users` |
+| `GITHUB_DATA_REPO` | `yourusername/job-agent-users` |
+| `ANTHROPIC_API_KEY` | From console.anthropic.com |
 
-### 3. Add user profiles as secrets
+4. Deploy — your signup URL is `yourproject.vercel.app`
 
-Each user is one secret named `USER_<IDENTIFIER>` (e.g. `USER_ALEX`, `USER_JORDAN`). The value is their full profile JSON. See the profile schema below.
+### Step 3 — Add secrets to the public code repo
 
-Profiles never appear in the repo, logs, or diffs — only in the encrypted Secrets store.
+Go to `job-agent` → Settings → Secrets and variables → Actions:
 
-### 4. Enable GitHub Actions
+| Secret | Value |
+|--------|-------|
+| `ANTHROPIC_API_KEY` | Anthropic API key |
+| `GMAIL_SENDER` | Gmail address that sends digests |
+| `GMAIL_APP_PASSWORD` | [Gmail App Password](https://myaccount.google.com/apppasswords) |
+| `DATA_REPO_TOKEN` | Same PAT as above (read access to `job-agent-users`) |
+| `GITHUB_DATA_REPO` | `yourusername/job-agent-users` |
 
-The workflow file is at `.github/workflows/job_agent.yml`. It runs automatically. You can also trigger it manually from the Actions tab to test.
+### Step 4 — Share the signup link
 
----
-
-## User profile schema
-
-```json
-{
-  "name": "Alex Jordan",
-  "email": "alex@example.com",
-  "schedule": "weekly",
-  "resume": "Plain text resume — used for cover letter generation and fit analysis",
-  "criteria": {
-    "target_titles": ["Director of Events", "VP of Conferences"],
-    "min_salary": "$130,000",
-    "location_preference": "Remote or Hybrid within 30 miles of Chicago, IL",
-    "industry_focus": ["Associations", "Tech", "Hospitality", "Corporate"],
-    "experience_level": "Senior (15 years)",
-    "special_instructions": "Prefer roles with P&L ownership. Open to 25% travel.",
-    "recency_days": 7,
-    "exclude_keywords": ["Entry Level", "Intern", "Assistant"]
-  }
-}
-```
-
-See `users/example_profile.json` for a complete example (fictional data — for local testing only).
-
-### Generating a profile
-
-The [signup form](signup.html) is a self-contained HTML file — open it locally in any browser. It walks through a 4-step intake:
-1. Name and email
-2. Resume (plain text)  
-3. Describe what you're looking for in plain English — Claude extracts the structured criteria from your words, including which industries and job boards to prioritize
-4. Schedule preference
-
-The form outputs a ready-to-paste JSON profile. The repo owner adds it as a `USER_*` secret.
+Send `yourproject.vercel.app` to anyone who should receive digests. That's it — no manual JSON editing, no code changes, no GitHub account required from candidates.
 
 ---
 
-## Supported industries and job boards
+## What each digest contains
 
-The agent maintains a source map of niche boards per industry. When the search runs, it tells Claude exactly which boards to search — not just "the web." This surfaces roles that never appear on general aggregators.
+For every matched role:
+- Role summary and fit analysis tied to the candidate's specific background
+- **Tailored resume** — same facts, reordered and reframed for this role
+- **Custom cover letter** — written in the candidate's voice using their uploaded sample
+- **Pre-filled application answers** — why interested, biggest achievement, leadership style, salary expectations
+- Direct apply link + source board link
+- Network angle — who they might know, how to get a warm intro
 
-| Industry | Key sources searched |
-|----------|---------------------|
+Plus 5 proactive outreach targets — organizations without open postings but strong fit.
+
+---
+
+## Industry-specific job board targeting
+
+The agent builds a source list from each user's industry preferences and tells Claude exactly which boards to search — not just "the web."
+
+| Industry | Key boards |
+|----------|-----------|
 | Associations | asaecenter.org, associationcareernetwork.com, nonprofitjobs.org |
-| Events / Meetings | mpiweb.org, pcma.org, bizbash.com, smartmeetings.com, meetingsnet.com |
+| Events / Meetings | mpiweb.org, pcma.org, bizbash.com, meetingsnet.com, smartmeetings.com |
 | Hospitality | hcareers.com, hospitalityonline.com, hospitalityjobbase.com |
-| Tech | LinkedIn, Greenhouse, Lever, Wellfound, Hacker News Jobs |
-| Nonprofit | idealist.org, devex.com, bridgespan.org, workforgood.org |
+| Tech | LinkedIn, Greenhouse, Lever, Wellfound, Builtin |
+| Nonprofit | idealist.org, devex.com, workforgood.org, bridgespan.org |
 | Finance / Fintech | efinancialcareers.com, wellfound.com, buysidehiring.com |
 | Education | higheredjobs.com, chronicle.com/jobs, edjoin.org |
 | Government | usajobs.gov, governmentjobs.com |
@@ -130,15 +140,16 @@ The agent maintains a source map of niche boards per industry. When the search r
 
 ---
 
-## Cost
+## Cost breakdown
 
-| Item | Cost |
-|------|------|
-| Claude Haiku per user per run | ~$0.05–0.15 |
-| GitHub Actions | Free (2,000 min/month; each run takes ~2–4 min) |
+| Component | Cost |
+|-----------|------|
+| Claude Haiku — job search + resume tailoring + cover letter + app fill per user | ~$0.10–0.20 |
+| GitHub Actions | Free (2,000 min/month; each run ~3–5 min) |
+| Vercel hosting | Free |
 | Gmail SMTP | Free |
 
-Two users on weekly schedules: ~$0.20–0.60/week.
+**10 users on weekly schedules:** ~$1–2/week (~$50–100/year total)
 
 ---
 
@@ -149,34 +160,15 @@ git clone https://github.com/yourusername/job-agent
 cd job-agent
 pip install anthropic
 
-# Create a local test profile (never commit real data)
-cp users/example_profile.json users/local_test.json
-# Edit local_test.json with test data
+# Create a local test user (never commit real data)
+mkdir -p users/test_user
+echo '{"name":"Test User","email":"test@example.com","schedule":"daily","resume_file":"resume.txt","cover_letter_file":null,"criteria":{"target_titles":["Director of Events"],"min_salary":"$130,000","location_preference":"Remote","industry_focus":["Associations","Tech"],"experience_level":"Senior (15 years)","special_instructions":"","recency_days":7,"exclude_keywords":["Entry Level","Intern"]}}' > users/test_user/profile.json
+echo "Name: Test User | 15 years events experience" > users/test_user/resume.txt
 
-# Set env vars
 export ANTHROPIC_API_KEY=sk-ant-...
 export GMAIL_SENDER=you@gmail.com
 export GMAIL_APP_PASSWORD=xxxx-xxxx-xxxx-xxxx
+# Leave GITHUB_DATA_REPO unset → agent reads from local users/ folder
 
 python agent/job_agent.py
-```
-
-The agent reads from `users/*.json` as a fallback when no `USER_*` env vars are present, making local iteration straightforward.
-
----
-
-## Project structure
-
-```
-job-agent/
-├── agent/
-│   └── job_agent.py          # Core agent — multi-user, source-aware
-├── users/
-│   ├── .gitkeep              # Real profiles go in Secrets, not here
-│   └── example_profile.json  # Fictional example for local dev
-├── .github/
-│   └── workflows/
-│       └── job_agent.yml     # Runs Mon–Fri 8am ET
-├── signup.html               # Self-contained profile generator
-└── README.md
 ```
