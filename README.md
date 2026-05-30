@@ -1,53 +1,173 @@
-# Professional Lead Generation Agent (FOR MY MOM)
+# Job Search Agent
 
-A custom automated pipeline designed to scrape niche industry job boards and deliver a curated, weekly digest of senior-level opportunities.
+A **multi-user, budget-optimized** AI job search pipeline. Each user gets a weekly email with matched roles, custom cover letters, and pre-filled application answers — all generated automatically.
 
-## Project Overview
+Built for senior executives. ~$0.05–0.15 per digest. Zero monthly hosting cost.
 
-Many senior-level roles in specialized industries, such as high-end event planning, are never posted on major aggregators like LinkedIn. This project automates the manual process of monitoring a specific list of high-value career portals. I created this specifically for my mom, so the prompt is made for her. If you clone, please update the prompt accordingly.
+---
 
-Every Monday morning, the agent generates a personalized HTML report containing:
+## How it works
 
-**Role Descriptions:** Summarized for quick reading.
+```
+users/latonya.json ──┐
+users/marcus.json  ──┼──▶ GitHub Actions (Mon–Fri 8am ET)
+users/jane.json    ──┘          │
+                                ▼
+                    job_agent.py (runs all users)
+                         │
+                    Claude Haiku + Web Search
+                         │
+                    ┌────┴──────────────────┐
+                    │  Job search results   │
+                    │  Cover letters        │
+                    │  App pre-fill answers │
+                    └────────────────────────┘
+                         │
+                    Gmail SMTP ──▶ Each user's inbox
+```
 
-**AI-Generated Fit Analysis:** An assessment of why the candidate is a strong match for each specific role.
+Each user profile has a `schedule` field. The agent runs every weekday but only sends digests to users whose schedule matches today:
+- `"daily"` → runs every weekday
+- `"weekly"` → runs every Monday
+- `"biweekly"` → runs 1st and 3rd Monday
+- `"monday"`, `"tuesday"`, etc. → runs on that specific day
 
-## Technical Architecture
-The core logic resides in job_agent.py, which orchestrates the following flow:
+---
 
-**Web Scraping:** Targets a pre-defined list of boutique job boards and career pages.
+## Setup
 
-**LLM Processing:** Utilizes Claude to parse unstructured site data, extract relevant job details, and perform a qualitative match analysis.
+### For non-technical users (the easy path)
 
-**Delivery:** Compiles the data into a clean, mobile-responsive HTML email for easy navigation.
+1. Open `signup.html` in your browser (or the hosted version)
+2. Fill out the 4-step form
+3. Download your `yourname.json` file
+4. Follow the 3 steps shown at the end
 
-## Getting Started
-Prerequisites
-Python 3.x
+That's it. No coding needed.
 
-I run this using the YAML file in `.github\workflows`. 
+---
 
-Set this up in GitHub actions. 
+### For technical users / repo owners
 
-This project works with the following GitHub secrets: 
+#### 1. Fork this repository
 
-Anthropic API Key (for Claude-based analysis)
-SENDER_EMAIL (email address of the person sending the job search update)
-RECIPIENT_EMAIL (email address of the person receiving the update, both emails can be the same)
-RESUME_CONTENT (your resume)
-CRITERIA_CONTENT(criteria of what to search for in json format)
+#### 2. Add GitHub Secrets
 
-Installation
-Clone the repository:
+Go to **Settings → Secrets and variables → Actions → New repository secret**:
 
-Bash
-git clone https://github.com/chanelrichardson/job-agent.git
+| Secret | Value |
+|--------|-------|
+| `ANTHROPIC_API_KEY` | Your key from [console.anthropic.com](https://console.anthropic.com) |
+| `GMAIL_SENDER` | Gmail address that sends the digests |
+| `GMAIL_APP_PASSWORD` | Gmail App Password (not your regular password) |
 
-Install dependencies:
+**Getting a Gmail App Password:**
+1. Enable 2-factor auth on the Gmail account
+2. Go to [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords)
+3. Create one named "Job Agent"
 
-As the only requiremnent for this project is the Anthropic Python library, run 
-pip install anthropic 
+#### 3. Add user profiles
 
-directly.
+Drop JSON files into the `users/` directory. One file per user.
 
-Configure your environment variables in a .env file (see .env.example).
+```
+users/
+  latonya_broome.json
+  marcus_webb.json
+  your_name.json
+```
+
+#### 4. Enable GitHub Actions
+
+The workflow is in `.github/workflows/job_agent.yml`. It runs automatically at 8am ET on weekdays. You can also trigger it manually from the Actions tab.
+
+---
+
+## User profile format
+
+```json
+{
+  "name": "Jane Smith",
+  "email": "jane@example.com",
+  "schedule": "weekly",
+  "resume": "Full resume text here...",
+  "criteria": {
+    "target_titles": ["VP of Marketing", "CMO", "Head of Growth"],
+    "min_salary": "$200,000",
+    "location_preference": "Remote or Hybrid — near Chicago, IL",
+    "industry_focus": ["SaaS", "Fintech", "Media"],
+    "experience_level": "Senior Executive (20+ years)",
+    "special_instructions": "Prioritize B2B SaaS companies with Series B+",
+    "recency_days": 7,
+    "exclude_keywords": ["Entry Level", "Intern", "Assistant"]
+  }
+}
+```
+
+---
+
+## Cost breakdown
+
+| Component | Cost |
+|-----------|------|
+| Claude Haiku (job search + cover letters + app fill) | ~$0.04–0.12 per user per run |
+| GitHub Actions | Free (2,000 min/month, each run takes ~2–4 min) |
+| Gmail SMTP | Free |
+| **Total per user per week** | **~$0.05–0.15** |
+
+**Cost for 10 users running weekly:** ~$0.50–1.50/week (~$6–18/month)
+
+### Model choice
+The agent uses **Claude Haiku** (`claude-haiku-4-5`) by default — it's 15x cheaper than Sonnet and handles all tasks well. To switch to a more powerful model, change `MODEL` at the top of `agent/job_agent.py`.
+
+---
+
+## What's in each digest
+
+For each matched role:
+- **Role summary** — what the job actually is
+- **Why it fits you** — tied to your specific background
+- **Network angle** — who you might know or how to get a warm intro
+- **Cover letter** — custom-written, ready to paste
+- **Application quick-fill** — pre-written answers for common questions (Why interested? Biggest achievement? Leadership style?)
+- **Apply button** — direct link
+
+Plus **5 proactive targets** — organizations that don't have open roles but are a strong fit to reach out to cold.
+
+---
+
+## Project structure
+
+```
+job-agent/
+├── agent/
+│   └── job_agent.py          # Main agent (multi-user)
+├── users/
+│   ├── latonya_broome.json   # Example user profile
+│   └── marcus_webb.json      # Example user profile
+├── .github/
+│   └── workflows/
+│       └── job_agent.yml     # GitHub Actions schedule
+├── signup.html               # Self-serve signup UI
+└── README.md
+```
+
+---
+
+## Adding the signup page to GitHub Pages
+
+To host the signup form so others can self-serve:
+
+1. Go to **Settings → Pages**
+2. Set source to `main` branch, root `/`
+3. Your form will be at `https://yourusername.github.io/job-agent/signup.html`
+
+Users can fill out the form, download their JSON, and open a pull request (or email it to you) to be added.
+
+---
+
+## Scaling considerations
+
+- **50+ users**: Consider splitting into multiple repositories or using a GitHub Action matrix to parallelize runs
+- **Deduplication**: The agent doesn't track previously seen jobs — each run is fresh. Add a `seen_jobs.json` per user if you want to suppress repeats
+- **Custom boards**: Edit the `SEARCH_PROMPT` to target specific job boards for niche industries
