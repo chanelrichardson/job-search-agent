@@ -299,14 +299,16 @@ async function send(){
   addMsg('usr',t);hist.push({role:'user',content:t});
   const th=addMsg('ai','',true);
   try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-haiku-4-5',max_tokens:900,system:SYS,messages:hist})});
-    const d=await r.json();const raw=d.content?.[0]?.text||'';
+    const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system:SYS,messages:hist})});
+    const d=await r.json();
+    if(!r.ok){th.remove();addMsg('ai','Error: '+(d.error||'Server error — check Vercel function logs.'));document.getElementById('sb').disabled=false;return;}
+    const raw=d.text||'';
     hist.push({role:'assistant',content:raw});
     const m=raw.match(/<criteria>([\s\S]*?)<\/criteria>/);
     const ch=raw.replace(/<criteria>[\s\S]*?<\/criteria>/,'').trim();
     th.remove();if(ch)addMsg('ai',ch);
     if(m){try{showCrit(JSON.parse(m[1].trim()));}catch(_){}}
-  }catch(e){th.remove();addMsg('ai','Something went wrong. Please try again.');}
+  }catch(e){console.error('Chat error:',e);th.remove();addMsg('ai','Network error: '+e.message);}
   document.getElementById('sb').disabled=false;document.getElementById('ct').focus();
 }
 async function submit(){
