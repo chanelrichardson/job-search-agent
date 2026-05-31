@@ -28,7 +28,7 @@ export default async function handler(req, res) {
 
   try {
     const body = req.body;
-    const { name, email, schedule, naturalLanguageRequest, resumeBase64, resumeFilename, coverLetterBase64, coverLetterFilename } = body;
+    const { name, email, schedule, naturalLanguageRequest, resumeBase64, resumeFilename, coverLetterBase64, coverLetterFilename, existingSlug } = body;
 
     if (!name || !email || !naturalLanguageRequest) {
       return res.status(400).json({ error: 'Name, email, and job description are required.' });
@@ -38,7 +38,8 @@ export default async function handler(req, res) {
     const criteria = await parseCriteria(naturalLanguageRequest, name, ANTHROPIC_KEY);
 
     // 2. Build the user profile object
-    const slug = name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+    // Use existingSlug if this is an update from a returning user
+    const slug = existingSlug || name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
     const profile = {
       name,
       email,

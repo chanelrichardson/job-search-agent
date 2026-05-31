@@ -140,14 +140,30 @@ select option{background:var(--s)}
   <div class="prog"><div class="pf" id="prog" style="width:25%"></div></div>
 
   <div class="panel active" id="p1">
-    <div class="ey">Step 1 of 4</div>
-    <h1 class="h1">Let's start with <em>you.</em></h1>
-    <p class="sub">Basic info so your digest lands in the right inbox.</p>
-    <div class="r2">
+    <div class="ey" id="p1-eyebrow">Step 1 of 4</div>
+    <h1 class="h1" id="p1-title">Let's start with <em>you.</em></h1>
+    <p class="sub" id="p1-sub">New here? Fill in your details below. Already signed up? Enter your email and we'll send you a code to edit your profile.</p>
+    <div class="r2" id="p1-name-row">
       <div class="fd"><label>Full name</label><input type="text" id="f-name" placeholder="Alex Jordan" autocomplete="name"></div>
       <div class="fd"><label>Email <span class="n">where your digest goes</span></label><input type="email" id="f-email" placeholder="you@email.com" autocomplete="email"></div>
     </div>
-    <div class="nav"><div></div><button class="btn bgo" onclick="next1()">Continue &rarr;</button></div>
+    <div class="fd" id="p1-email-only-row" style="display:none">
+      <label>Email address</label>
+      <input type="email" id="f-email-return" placeholder="you@email.com" autocomplete="email">
+    </div>
+    <div class="fd" id="p1-code-row" style="display:none">
+      <label>Verification code <span class="n">check your inbox</span></label>
+      <input type="text" id="f-code" placeholder="123456" maxlength="6" style="letter-spacing:0.2em;font-size:20px;text-align:center">
+      <div id="p1-code-hint" style="font-size:12px;color:var(--mu);margin-top:4px">Didn't get it? <button onclick="sendCode()" style="background:none;border:none;color:var(--gold);cursor:pointer;font-size:12px;text-decoration:underline;padding:0">Resend</button></div>
+    </div>
+    <div class="er" id="p1-err"></div>
+    <div class="nav">
+      <button class="btn bg" id="p1-return-btn" onclick="showReturnFlow()" style="font-size:13px">Already signed up? Edit my profile</button>
+      <div style="display:flex;gap:10px;align-items:center">
+        <button class="btn bg" id="p1-back-btn" onclick="showNewFlow()" style="display:none">&larr; New user</button>
+        <button class="btn bgo" id="p1-next-btn" onclick="next1()">Continue &rarr;</button>
+      </div>
+    </div>
   </div>
 
   <div class="panel" id="p2">
@@ -247,6 +263,94 @@ function go(n){
   document.getElementById('prog').style.width=`${(step/5)*100}%`;
   window.scrollTo({top:0,behavior:'smooth'});
 }
+let returningSlug=null;
+let returnMode=false;
+
+function showErr(id,msg){const e=document.getElementById(id);e.textContent=msg;e.classList.add('show');}
+function clearErr(id){const e=document.getElementById(id);e.textContent='';e.classList.remove('show');}
+
+function showReturnFlow(){
+  returnMode=true;
+  document.getElementById('p1-eyebrow').textContent='Welcome back';
+  document.getElementById('p1-title').innerHTML='Edit your <em>profile.</em>';
+  document.getElementById('p1-sub').textContent='Enter your email and we\'ll send you a 6-digit code.';
+  document.getElementById('p1-name-row').style.display='none';
+  document.getElementById('p1-email-only-row').style.display='block';
+  document.getElementById('p1-return-btn').style.display='none';
+  document.getElementById('p1-back-btn').style.display='inline-flex';
+  document.getElementById('p1-next-btn').textContent='Send code →';
+  document.getElementById('p1-next-btn').onclick=sendCode;
+  clearErr('p1-err');
+}
+
+function showNewFlow(){
+  returnMode=false;
+  document.getElementById('p1-eyebrow').textContent='Step 1 of 4';
+  document.getElementById('p1-title').innerHTML='Let\'s start with <em>you.</em>';
+  document.getElementById('p1-sub').textContent='New here? Fill in your details below. Already signed up? Enter your email and we\'ll send you a code to edit your profile.';
+  document.getElementById('p1-name-row').style.display='';
+  document.getElementById('p1-email-only-row').style.display='none';
+  document.getElementById('p1-code-row').style.display='none';
+  document.getElementById('p1-return-btn').style.display='';
+  document.getElementById('p1-back-btn').style.display='none';
+  document.getElementById('p1-next-btn').textContent='Continue →';
+  document.getElementById('p1-next-btn').onclick=next1;
+  clearErr('p1-err');
+}
+
+async function sendCode(){
+  const em=(document.getElementById('f-email-return').value||document.getElementById('f-email').value).trim();
+  if(!em||!em.includes('@')){showErr('p1-err','Enter a valid email address.');return;}
+  const btn=document.getElementById('p1-next-btn');
+  btn.disabled=true;btn.textContent='Sending…';
+  clearErr('p1-err');
+  try{
+    const r=await fetch('/api/send-code',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:em})});
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.error||'Server error');
+    if(!d.exists){showErr('p1-err','No account found for that email. Fill in the new user form instead.');btn.disabled=false;btn.textContent='Send code →';return;}
+    document.getElementById('p1-code-row').style.display='block';
+    document.getElementById('p1-sub').textContent='Code sent! Check your inbox and enter it below.';
+    btn.textContent='Verify code →';
+    btn.onclick=verifyCode;
+    btn.disabled=false;
+  }catch(e){showErr('p1-err',e.message);btn.disabled=false;btn.textContent='Send code →';}
+}
+
+async function verifyCode(){
+  const em=(document.getElementById('f-email-return').value||document.getElementById('f-email').value).trim();
+  const code=document.getElementById('f-code').value.trim();
+  if(!code||code.length!==6){showErr('p1-err','Enter the 6-digit code from your email.');return;}
+  const btn=document.getElementById('p1-next-btn');
+  btn.disabled=true;btn.textContent='Verifying…';
+  clearErr('p1-err');
+  try{
+    const r=await fetch('/api/verify-code',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:em,code})});
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.error||'Server error');
+    if(!d.valid){showErr('p1-err',d.error||'Invalid code.');btn.disabled=false;btn.textContent='Verify code →';return;}
+    // Pre-fill form with existing profile
+    returningSlug=d.slug;
+    const p=d.profile;
+    document.getElementById('f-name').value=p.name||'';
+    document.getElementById('f-email').value=p.email||'';
+    ini=(p.name||'').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    if(p.schedule){sched=p.schedule;document.querySelectorAll('.si').forEach(i=>{i.classList.toggle('on',i.dataset.v===p.schedule);});}
+    if(p.criteria){
+      const c=p.criteria;
+      criteria=c;
+      const chatPrefill=`Updating my profile. Current preferences: ${JSON.stringify(c)}`;
+      hist=[{role:'user',content:chatPrefill}];
+      showCrit(c);
+    }
+    // Reset to new flow visually but with data filled in
+    showNewFlow();
+    document.getElementById('p1-sub').textContent='Your existing profile has been loaded. Update anything you like.';
+    document.getElementById('p1-return-btn').style.display='none';
+    go(2);
+  }catch(e){showErr('p1-err',e.message);btn.disabled=false;btn.textContent='Verify code →';}
+}
+
 function next1(){
   const nm=document.getElementById('f-name').value.trim();
   const em=document.getElementById('f-email').value.trim();
@@ -318,7 +422,7 @@ async function submit(){
   const email=document.getElementById('f-email').value.trim();
   const chatTxt=hist.filter(m=>m.role==='user').map(m=>m.content).join('\n');
   try{
-    const res=await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,schedule:sched,naturalLanguageRequest:chatTxt||'No description provided.',resumeBase64:rData.b,resumeFilename:rData.f,coverLetterBase64:cData.b,coverLetterFilename:cData.f})});
+    const res=await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,schedule:sched,naturalLanguageRequest:chatTxt||'No description provided.',resumeBase64:rData.b,resumeFilename:rData.f,coverLetterBase64:cData.b,coverLetterFilename:cData.f,existingSlug:returningSlug})});
     const data=await res.json();
     if(!res.ok)throw new Error(data.error||'Unknown error');
     const c=data.criteria||crit||{};
