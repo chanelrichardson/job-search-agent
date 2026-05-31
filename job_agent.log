@@ -1,0 +1,536 @@
+2026-05-31 12:01:47,644 INFO 
+==================================================
+User slug: test_user
+2026-05-31 12:07:08,837 INFO 
+==================================================
+User slug: test_user
+2026-05-31 12:09:18,302 INFO 
+==================================================
+User slug: test_user
+2026-05-31 12:09:18,303 INFO   Processing: Chanel Richardson | resume: yes | CLs: 2
+2026-05-31 12:09:53,420 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:09:53,601 ERROR   Failed for Chanel Richardson: Expecting ',' delimiter: line 89 column 6 (char 7848)
+Traceback (most recent call last):
+  File "C:\Users\crich\Documents\GitHub\mom-job-agent\agent\job_agent.py", line 316, in process_user
+    data = search_jobs(client, profile, today_str)
+  File "C:\Users\crich\Documents\GitHub\mom-job-agent\agent\job_agent.py", line 184, in search_jobs
+        return parse_json(claude(client, f"""You are a job search agent for {profile['name']}.
+               ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    RESUME: {profile['_resume'] or 'See criteria'}
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<14 lines>...
+    {{"positive_message":"2-3 warm sentences for {profile['name']}.","jobs":[{{"title":"","organization":"","type":"Full-time","location":"","salary":"","posted":"","source":"","source_url":"","description":"","why_fit":"","network_angle":"","apply_url":""}}],"proactive_targets":[{{"organization":"","sector":"","why":"","approach":"","contact_type":""}}]}}
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    Find 3-5 roles and 3-5 proactive targets.""", web=True))
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\crich\Documents\GitHub\mom-job-agent\agent\job_agent.py", line 127, in parse_json
+    return json.loads(c[s:e])
+           ~~~~~~~~~~^^^^^^^^
+  File "C:\Users\crich\AppData\Local\Python\pythoncore-3.14-64\Lib\json\__init__.py", line 352, in loads
+    return _default_decoder.decode(s)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "C:\Users\crich\AppData\Local\Python\pythoncore-3.14-64\Lib\json\decoder.py", line 345, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\crich\AppData\Local\Python\pythoncore-3.14-64\Lib\json\decoder.py", line 361, in raw_decode
+    obj, end = self.scan_once(s, idx)
+               ~~~~~~~~~~~~~~^^^^^^^^
+json.decoder.JSONDecodeError: Expecting ',' delimiter: line 89 column 6 (char 7848)
+2026-05-31 12:11:53,427 INFO 
+==================================================
+User slug: test_user
+2026-05-31 12:11:53,429 INFO   Processing: Chanel Richardson | resume: yes | CLs: 2
+2026-05-31 12:12:09,621 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:12:09,758 ERROR   Failed for Chanel Richardson: No JSON found in response. Got:
+I'll help you find relevant opportunities for Chanel Richardson. Let me search across these job boards systematically.Let me search for more specific, recent roles with better salary and posting information.Based on my research across job boards, I've identified relevant opportunities and strategic targets aligned with Chanel's expertise in risk governance, AI/ML, and data engineering. However, I encountered a limitation: most job boards don't surface individual job postings with full details in
+Traceback (most recent call last):
+  File "C:\Users\crich\Documents\GitHub\mom-job-agent\agent\job_agent.py", line 346, in process_user
+    data = search_jobs(client, profile, today_str)
+  File "C:\Users\crich\Documents\GitHub\mom-job-agent\agent\job_agent.py", line 207, in search_jobs
+        return parse_json(claude(client, f"""You are a job search agent for {profile['name']}.
+               ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    RESUME: {profile['_resume'] or 'See criteria'}
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<21 lines>...
+    - No newlines inside string values — keep descriptions to one line
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    - Salary: use format "$160,000–$185,000" or "Not listed" — never null""", web=True))
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\crich\Documents\GitHub\mom-job-agent\agent\job_agent.py", line 128, in parse_json
+    raise ValueError(f"No JSON found in response. Got:\n{text[:500]}")
+ValueError: No JSON found in response. Got:
+I'll help you find relevant opportunities for Chanel Richardson. Let me search across these job boards systematically.Let me search for more specific, recent roles with better salary and posting information.Based on my research across job boards, I've identified relevant opportunities and strategic targets aligned with Chanel's expertise in risk governance, AI/ML, and data engineering. However, I encountered a limitation: most job boards don't surface individual job postings with full details in
+2026-05-31 12:14:05,966 INFO 
+==================================================
+User slug: test_user
+2026-05-31 12:14:05,967 INFO   Processing: Chanel Richardson | resume: yes | CLs: 2
+2026-05-31 12:14:05,967 INFO   Step 1: Searching 14 sources...
+2026-05-31 12:14:07,005 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 12:14:07,009 INFO Retrying request to /v1/messages in 0.460271 seconds
+2026-05-31 12:14:07,656 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 12:14:07,657 INFO Retrying request to /v1/messages in 0.804299 seconds
+2026-05-31 12:14:08,637 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 12:14:08,638 ERROR   Failed for Chanel Richardson: Error code: 429 - {'type': 'error', 'error': {'type': 'rate_limit_error', 'message': "This request would exceed your organization's rate limit of 50,000 input tokens per minute (org: 9c7b0652-7ead-484c-9f26-bfd38dba4ae6, model: claude-haiku-4-5-20251001). For details, refer to: https://docs.claude.com/en/api/rate-limits. You can see the response headers for current usage. Reduce the prompt length or the maximum tokens requested, or try again later. View your current limits at https://console.anthropic.com/settings/limits. To raise this limit, purchase credits to advance to the next usage tier at https://console.anthropic.com/settings/billing."}, 'request_id': 'req_011CbawfzpaMdFjQMv8eepw9'}
+Traceback (most recent call last):
+  File "C:\Users\crich\Documents\GitHub\mom-job-agent\agent\job_agent.py", line 360, in process_user
+    data = search_jobs(client, profile, today_str)
+  File "C:\Users\crich\Documents\GitHub\mom-job-agent\agent\job_agent.py", line 232, in search_jobs
+    raw_findings = claude(client, search_prompt, web=True)
+  File "C:\Users\crich\Documents\GitHub\mom-job-agent\agent\job_agent.py", line 120, in claude
+    r = client.messages.create(**kwargs)
+  File "C:\Users\crich\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\anthropic\_utils\_utils.py", line 294, in wrapper
+    return func(*args, **kwargs)
+  File "C:\Users\crich\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\anthropic\resources\messages\messages.py", line 1006, in create
+    return self._post(
+           ~~~~~~~~~~^
+        "/v1/messages",
+        ^^^^^^^^^^^^^^^
+    ...<30 lines>...
+        stream_cls=Stream[RawMessageStreamEvent],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\crich\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\anthropic\_base_client.py", line 1374, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\crich\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\anthropic\_base_client.py", line 1147, in request
+    raise self._make_status_error_from_response(err.response) from None
+anthropic.RateLimitError: Error code: 429 - {'type': 'error', 'error': {'type': 'rate_limit_error', 'message': "This request would exceed your organization's rate limit of 50,000 input tokens per minute (org: 9c7b0652-7ead-484c-9f26-bfd38dba4ae6, model: claude-haiku-4-5-20251001). For details, refer to: https://docs.claude.com/en/api/rate-limits. You can see the response headers for current usage. Reduce the prompt length or the maximum tokens requested, or try again later. View your current limits at https://console.anthropic.com/settings/limits. To raise this limit, purchase credits to advance to the next usage tier at https://console.anthropic.com/settings/billing."}, 'request_id': 'req_011CbawfzpaMdFjQMv8eepw9'}
+2026-05-31 12:18:51,356 INFO 
+==================================================
+User slug: test_user
+2026-05-31 12:18:51,358 INFO   Processing: Chanel Richardson | resume: yes | CLs: 2
+2026-05-31 12:18:51,358 INFO   Step 1: Searching 14 sources...
+2026-05-31 12:19:22,695 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:19:22,914 INFO   Step 1 complete — got 6242 chars of findings
+2026-05-31 12:19:22,916 INFO   Step 2: Formatting results as JSON...
+2026-05-31 12:19:23,074 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 12:19:23,077 INFO Retrying request to /v1/messages in 0.447529 seconds
+2026-05-31 12:19:23,731 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 12:19:23,732 INFO Retrying request to /v1/messages in 0.757431 seconds
+2026-05-31 12:19:24,777 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 12:19:24,781 ERROR   Failed for Chanel Richardson: Error code: 429 - {'type': 'error', 'error': {'type': 'rate_limit_error', 'message': "This request would exceed your organization's rate limit of 50,000 input tokens per minute (org: 9c7b0652-7ead-484c-9f26-bfd38dba4ae6, model: claude-haiku-4-5-20251001). For details, refer to: https://docs.claude.com/en/api/rate-limits. You can see the response headers for current usage. Reduce the prompt length or the maximum tokens requested, or try again later. View your current limits at https://console.anthropic.com/settings/limits. To raise this limit, purchase credits to advance to the next usage tier at https://console.anthropic.com/settings/billing."}, 'request_id': 'req_011Cbax5JHh7uxUQABAKvcHH'}
+Traceback (most recent call last):
+  File "C:\Users\crich\Documents\GitHub\mom-job-agent\agent\job_agent.py", line 360, in process_user
+    data = search_jobs(client, profile, today_str)
+  File "C:\Users\crich\Documents\GitHub\mom-job-agent\agent\job_agent.py", line 282, in search_jobs
+    return parse_json(claude(client, format_prompt, web=False))
+                      ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\crich\Documents\GitHub\mom-job-agent\agent\job_agent.py", line 120, in claude
+    r = client.messages.create(**kwargs)
+  File "C:\Users\crich\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\anthropic\_utils\_utils.py", line 294, in wrapper
+    return func(*args, **kwargs)
+  File "C:\Users\crich\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\anthropic\resources\messages\messages.py", line 1006, in create
+    return self._post(
+           ~~~~~~~~~~^
+        "/v1/messages",
+        ^^^^^^^^^^^^^^^
+    ...<30 lines>...
+        stream_cls=Stream[RawMessageStreamEvent],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\crich\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\anthropic\_base_client.py", line 1374, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\crich\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\anthropic\_base_client.py", line 1147, in request
+    raise self._make_status_error_from_response(err.response) from None
+anthropic.RateLimitError: Error code: 429 - {'type': 'error', 'error': {'type': 'rate_limit_error', 'message': "This request would exceed your organization's rate limit of 50,000 input tokens per minute (org: 9c7b0652-7ead-484c-9f26-bfd38dba4ae6, model: claude-haiku-4-5-20251001). For details, refer to: https://docs.claude.com/en/api/rate-limits. You can see the response headers for current usage. Reduce the prompt length or the maximum tokens requested, or try again later. View your current limits at https://console.anthropic.com/settings/limits. To raise this limit, purchase credits to advance to the next usage tier at https://console.anthropic.com/settings/billing."}, 'request_id': 'req_011Cbax5JHh7uxUQABAKvcHH'}
+2026-05-31 12:20:55,079 INFO 
+==================================================
+User slug: test_user
+2026-05-31 12:20:55,081 INFO   Processing: Chanel Richardson | resume: yes | CLs: 2
+2026-05-31 12:20:55,081 INFO   Step 1: Searching 14 sources...
+2026-05-31 12:20:55,800 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 12:20:55,803 INFO Retrying request to /v1/messages in 26.000000 seconds
+2026-05-31 12:21:44,457 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:21:44,713 INFO   Step 1 complete — got 2803 chars of findings
+2026-05-31 12:21:44,714 INFO   Step 2: Formatting results as JSON...
+2026-05-31 12:21:44,889 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 12:21:44,891 INFO Retrying request to /v1/messages in 0.386521 seconds
+2026-05-31 12:21:45,442 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 12:21:45,443 INFO Retrying request to /v1/messages in 0.865338 seconds
+2026-05-31 12:21:46,459 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 12:21:46,468 ERROR   Failed for Chanel Richardson: Error code: 429 - {'type': 'error', 'error': {'type': 'rate_limit_error', 'message': "This request would exceed your organization's rate limit of 50,000 input tokens per minute (org: 9c7b0652-7ead-484c-9f26-bfd38dba4ae6, model: claude-haiku-4-5-20251001). For details, refer to: https://docs.claude.com/en/api/rate-limits. You can see the response headers for current usage. Reduce the prompt length or the maximum tokens requested, or try again later. View your current limits at https://console.anthropic.com/settings/limits. To raise this limit, purchase credits to advance to the next usage tier at https://console.anthropic.com/settings/billing."}, 'request_id': 'req_011CbaxFkL96A4DUoCPtwF1d'}
+Traceback (most recent call last):
+  File "C:\Users\crich\Documents\GitHub\mom-job-agent\agent\job_agent.py", line 360, in process_user
+    data = search_jobs(client, profile, today_str)
+  File "C:\Users\crich\Documents\GitHub\mom-job-agent\agent\job_agent.py", line 282, in search_jobs
+    return parse_json(claude(client, format_prompt, web=False))
+                      ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\crich\Documents\GitHub\mom-job-agent\agent\job_agent.py", line 120, in claude
+    r = client.messages.create(**kwargs)
+  File "C:\Users\crich\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\anthropic\_utils\_utils.py", line 294, in wrapper
+    return func(*args, **kwargs)
+  File "C:\Users\crich\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\anthropic\resources\messages\messages.py", line 1006, in create
+    return self._post(
+           ~~~~~~~~~~^
+        "/v1/messages",
+        ^^^^^^^^^^^^^^^
+    ...<30 lines>...
+        stream_cls=Stream[RawMessageStreamEvent],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\crich\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\anthropic\_base_client.py", line 1374, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\crich\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\anthropic\_base_client.py", line 1147, in request
+    raise self._make_status_error_from_response(err.response) from None
+anthropic.RateLimitError: Error code: 429 - {'type': 'error', 'error': {'type': 'rate_limit_error', 'message': "This request would exceed your organization's rate limit of 50,000 input tokens per minute (org: 9c7b0652-7ead-484c-9f26-bfd38dba4ae6, model: claude-haiku-4-5-20251001). For details, refer to: https://docs.claude.com/en/api/rate-limits. You can see the response headers for current usage. Reduce the prompt length or the maximum tokens requested, or try again later. View your current limits at https://console.anthropic.com/settings/limits. To raise this limit, purchase credits to advance to the next usage tier at https://console.anthropic.com/settings/billing."}, 'request_id': 'req_011CbaxFkL96A4DUoCPtwF1d'}
+2026-05-31 12:25:36,761 INFO 
+==================================================
+User slug: test_user
+2026-05-31 12:25:36,763 INFO   Processing: Chanel Richardson | resume: yes | CLs: 2
+2026-05-31 12:25:36,764 INFO   Step 1: Searching 14 sources...
+2026-05-31 12:26:03,796 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:26:03,923 INFO   Step 1 complete — got 5778 chars of findings
+2026-05-31 12:26:03,925 INFO   Step 2: Formatting results as JSON...
+2026-05-31 12:26:04,095 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 12:26:04,097 INFO Retrying request to /v1/messages in 0.437243 seconds
+2026-05-31 12:26:04,681 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 12:26:04,681 INFO Retrying request to /v1/messages in 0.765991 seconds
+2026-05-31 12:26:05,657 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 12:26:05,667 WARNING   Rate limited — waiting 30s before retry 1...
+2026-05-31 12:26:35,948 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 12:26:35,951 INFO Retrying request to /v1/messages in 0.485792 seconds
+2026-05-31 12:26:36,591 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 12:26:36,592 INFO Retrying request to /v1/messages in 0.779017 seconds
+2026-05-31 12:26:37,529 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 12:26:37,531 WARNING   Rate limited — waiting 60s before retry 2...
+2026-05-31 12:27:38,209 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 12:27:38,223 INFO Retrying request to /v1/messages in 13.000000 seconds
+2026-05-31 12:28:08,433 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:28:08,479 ERROR JSON parse error at char 7892: Expecting ',' delimiter
+2026-05-31 12:28:08,479 ERROR Context around error: ...g to national AI standards and governance frameworks.",
+      "contact_type": "Chief, AI Risk Management Division"
+    }...
+2026-05-31 12:28:08,488 ERROR   Failed for Chanel Richardson: Could not parse JSON after cleanup. Error at char 7892: Expecting ',' delimiter. Context: ...g to national AI standards and governance frameworks.",
+      "contact_type": "Chief, AI Risk Management Division"
+    }...
+Traceback (most recent call last):
+  File "C:\Users\crich\Documents\GitHub\mom-job-agent\agent\job_agent.py", line 147, in parse_json
+    return json.loads(raw)
+           ~~~~~~~~~~^^^^^
+  File "C:\Users\crich\AppData\Local\Python\pythoncore-3.14-64\Lib\json\__init__.py", line 352, in loads
+    return _default_decoder.decode(s)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "C:\Users\crich\AppData\Local\Python\pythoncore-3.14-64\Lib\json\decoder.py", line 345, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\crich\AppData\Local\Python\pythoncore-3.14-64\Lib\json\decoder.py", line 361, in raw_decode
+    obj, end = self.scan_once(s, idx)
+               ~~~~~~~~~~~~~~^^^^^^^^
+json.decoder.JSONDecodeError: Expecting ',' delimiter: line 82 column 6 (char 7892)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\crich\Documents\GitHub\mom-job-agent\agent\job_agent.py", line 160, in parse_json
+    return json.loads(fixed)
+           ~~~~~~~~~~^^^^^^^
+  File "C:\Users\crich\AppData\Local\Python\pythoncore-3.14-64\Lib\json\__init__.py", line 352, in loads
+    return _default_decoder.decode(s)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "C:\Users\crich\AppData\Local\Python\pythoncore-3.14-64\Lib\json\decoder.py", line 345, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\crich\AppData\Local\Python\pythoncore-3.14-64\Lib\json\decoder.py", line 361, in raw_decode
+    obj, end = self.scan_once(s, idx)
+               ~~~~~~~~~~~~~~^^^^^^^^
+json.decoder.JSONDecodeError: Expecting ',' delimiter: line 82 column 6 (char 7892)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\crich\Documents\GitHub\mom-job-agent\agent\job_agent.py", line 376, in process_user
+    data = search_jobs(client, profile, today_str)
+  File "C:\Users\crich\Documents\GitHub\mom-job-agent\agent\job_agent.py", line 298, in search_jobs
+    return parse_json(claude_with_retry(client, format_prompt, web=False))
+  File "C:\Users\crich\Documents\GitHub\mom-job-agent\agent\job_agent.py", line 162, in parse_json
+    raise ValueError(
+    ...<3 lines>...
+    )
+ValueError: Could not parse JSON after cleanup. Error at char 7892: Expecting ',' delimiter. Context: ...g to national AI standards and governance frameworks.",
+      "contact_type": "Chief, AI Risk Management Division"
+    }...
+2026-05-31 12:30:33,535 INFO 
+==================================================
+User slug: test_user
+2026-05-31 12:30:33,536 INFO   Processing: Chanel Richardson | resume: yes | CLs: 2
+2026-05-31 12:30:33,537 INFO   Step 1: Searching 14 sources...
+2026-05-31 12:31:06,318 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:31:06,458 INFO   Step 1 complete — got 5918 chars of findings
+2026-05-31 12:31:06,462 INFO   Step 2: Formatting results as JSON...
+2026-05-31 12:31:06,618 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 12:31:06,621 INFO Retrying request to /v1/messages in 0.382158 seconds
+2026-05-31 12:31:07,169 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 12:31:07,170 INFO Retrying request to /v1/messages in 0.941629 seconds
+2026-05-31 12:31:08,284 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 12:31:08,288 WARNING   Rate limited — waiting 30s before retry 1...
+2026-05-31 12:31:38,595 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 12:31:38,595 INFO Retrying request to /v1/messages in 0.406778 seconds
+2026-05-31 12:31:39,162 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 12:31:39,163 INFO Retrying request to /v1/messages in 0.925861 seconds
+2026-05-31 12:31:40,275 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 12:31:40,276 WARNING   Rate limited — waiting 60s before retry 2...
+2026-05-31 12:32:40,563 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 12:32:40,569 INFO Retrying request to /v1/messages in 22.000000 seconds
+2026-05-31 12:33:22,233 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:33:28,680 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:33:34,468 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:33:39,065 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:33:44,997 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:33:51,357 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:33:56,385 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:34:03,088 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:34:08,371 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:34:13,001 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:34:22,869 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:34:28,153 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:34:34,185 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:34:40,719 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:34:46,364 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:34:50,299 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:34:50,304 ERROR   Failed for Chanel Richardson: name 'HTML_WRAP' is not defined
+Traceback (most recent call last):
+  File "C:\Users\crich\Documents\GitHub\mom-job-agent\agent\job_agent.py", line 426, in process_user
+    html  = build_html(profile, data, today_str, srcs)
+  File "C:\Users\crich\Documents\GitHub\mom-job-agent\agent\job_agent.py", line 382, in build_html
+    return HTML_WRAP.format(
+           ^^^^^^^^^
+NameError: name 'HTML_WRAP' is not defined
+2026-05-31 12:39:09,807 INFO 
+==================================================
+User slug: test_user
+2026-05-31 12:39:09,808 INFO   Processing: Chanel Richardson | resume: yes | CLs: 2
+2026-05-31 12:39:09,809 INFO   Step 1: Searching 14 sources...
+2026-05-31 12:39:42,459 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:39:42,578 INFO   Step 1 complete â€” got 4470 chars of findings
+2026-05-31 12:39:42,579 INFO   Step 2: Formatting results as JSON...
+2026-05-31 12:39:42,743 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 12:39:42,744 INFO Retrying request to /v1/messages in 0.406381 seconds
+2026-05-31 12:39:43,400 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 12:39:43,400 INFO Retrying request to /v1/messages in 0.786140 seconds
+2026-05-31 12:39:44,345 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 12:39:44,346 WARNING   Rate limited â€” waiting 30s before retry 1...
+2026-05-31 12:40:14,585 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 12:40:14,586 INFO Retrying request to /v1/messages in 0.399531 seconds
+2026-05-31 12:40:15,134 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 12:40:15,135 INFO Retrying request to /v1/messages in 0.859797 seconds
+2026-05-31 12:40:16,136 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 12:40:16,137 WARNING   Rate limited â€” waiting 60s before retry 2...
+2026-05-31 12:41:16,342 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 12:41:16,342 INFO Retrying request to /v1/messages in 0.452225 seconds
+2026-05-31 12:41:16,944 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 12:41:16,945 INFO Retrying request to /v1/messages in 0.875861 seconds
+2026-05-31 12:41:17,987 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 12:41:17,988 WARNING   Rate limited â€” waiting 120s before retry 3...
+2026-05-31 12:43:18,229 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 12:43:18,232 INFO Retrying request to /v1/messages in 5.000000 seconds
+2026-05-31 12:43:41,498 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:43:41,527 INFO   -> Remote Data Engineer @ DataKind
+2026-05-31 12:43:51,776 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:43:57,307 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:44:01,638 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:44:01,641 INFO   -> AI Risk & Compliance Analyst @ Not listed
+2026-05-31 12:44:08,073 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:44:13,686 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:44:17,669 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:44:17,671 INFO   -> Remote Data Scientist @ Not listed
+2026-05-31 12:44:23,569 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:44:29,481 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:44:33,651 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:44:33,653 INFO   -> AI Risk Management Consultant @ Not listed
+2026-05-31 12:44:40,240 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:44:45,916 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:44:49,906 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:44:49,908 INFO   -> Remote Data Engineer @ Not listed
+2026-05-31 12:44:56,167 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:45:01,958 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:45:05,859 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:45:05,873 ERROR   Failed for Chanel Richardson: 'charmap' codec can't encode character '\u25cf' in position 4965: character maps to <undefined>
+Traceback (most recent call last):
+  File "C:\Users\crich\Documents\GitHub\mom-job-agent\agent\job_agent.py", line 478, in process_user
+    send_email(profile, f"{name}'s Job Search Digest â€” {datetime.now().strftime('%b %d')}", html, plain)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\crich\Documents\GitHub\mom-job-agent\test_run.py", line 154, in mock_send_email
+    f.write(html)
+    ~~~~~~~^^^^^^
+  File "C:\Users\crich\AppData\Local\Python\pythoncore-3.14-64\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u25cf' in position 4965: character maps to <undefined>
+2026-05-31 12:50:06,228 INFO 
+==================================================
+User slug: test_user
+2026-05-31 12:50:06,229 INFO   Processing: Your Name Here | resume: yes | CLs: 0
+2026-05-31 12:50:06,229 INFO   Step 1: Identifying target companies...
+2026-05-31 12:50:10,648 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:50:10,666 INFO   Step 1 complete â€” identified companies
+2026-05-31 12:50:10,667 INFO   Step 2: Searching target companies for open roles...
+2026-05-31 12:50:14,926 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:50:14,929 INFO   Step 2 complete â€” got 1427 chars
+2026-05-31 12:50:14,929 INFO   Step 3: Formatting as JSON...
+2026-05-31 12:50:16,251 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:50:16,252 ERROR   Failed for Your Name Here: name 'HTML_WRAP' is not defined
+Traceback (most recent call last):
+  File "C:\Users\crich\Documents\GitHub\mom-job-agent\agent\job_agent.py", line 485, in process_user
+    html  = build_html(profile, data, today_str, srcs)
+  File "C:\Users\crich\Documents\GitHub\mom-job-agent\agent\job_agent.py", line 441, in build_html
+    return HTML_WRAP.format(
+           ^^^^^^^^^
+NameError: name 'HTML_WRAP' is not defined
+2026-05-31 12:54:15,726 INFO 
+==================================================
+User slug: test_user
+2026-05-31 12:54:15,727 INFO   Processing: Chanel Richardson | resume: yes | CLs: 0
+2026-05-31 12:54:15,728 INFO   Step 1: Identifying target companies...
+2026-05-31 12:54:23,566 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:54:23,584 INFO   Step 1 complete â€” identified companies
+2026-05-31 12:54:23,586 INFO   Step 2: Searching target companies for open roles...
+2026-05-31 12:54:57,746 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:54:57,874 INFO   Step 2 complete â€” got 5866 chars
+2026-05-31 12:54:57,874 INFO   Step 3: Formatting as JSON...
+2026-05-31 12:54:58,032 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 12:54:58,032 INFO Retrying request to /v1/messages in 0.484513 seconds
+2026-05-31 12:54:58,661 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 12:54:58,663 INFO Retrying request to /v1/messages in 0.971138 seconds
+2026-05-31 12:54:59,775 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 12:54:59,776 WARNING   Rate limited â€” waiting 30s before retry 1...
+2026-05-31 12:55:30,027 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 12:55:30,028 INFO Retrying request to /v1/messages in 0.411971 seconds
+2026-05-31 12:55:30,577 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 12:55:30,578 INFO Retrying request to /v1/messages in 0.973289 seconds
+2026-05-31 12:55:31,699 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 12:55:31,700 WARNING   Rate limited â€” waiting 60s before retry 2...
+2026-05-31 12:56:31,924 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 12:56:31,926 INFO Retrying request to /v1/messages in 0.438863 seconds
+2026-05-31 12:56:32,930 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 12:56:32,933 INFO Retrying request to /v1/messages in 0.861003 seconds
+2026-05-31 12:56:33,966 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 12:56:33,967 WARNING   Rate limited â€” waiting 120s before retry 3...
+2026-05-31 12:58:58,729 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:58:58,775 INFO   -> Program Associate @ AI Now Institute
+2026-05-31 12:59:03,499 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:59:08,796 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:59:13,293 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:59:13,296 INFO   -> Senior Director, Individual Giving (Major Gifts) @ Voting Rights Lab
+2026-05-31 12:59:18,637 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:59:23,853 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:59:28,482 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:59:28,485 INFO   -> Head of Data Science - Identity & Compliance @ Socure
+2026-05-31 12:59:34,867 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:59:39,857 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:59:44,184 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 12:59:44,200 ERROR   Failed for Chanel Richardson: name 'HTML_WRAP' is not defined
+Traceback (most recent call last):
+  File "C:\Users\crich\Documents\GitHub\mom-job-agent\agent\job_agent.py", line 485, in process_user
+    html  = build_html(profile, data, today_str, srcs)
+  File "C:\Users\crich\Documents\GitHub\mom-job-agent\agent\job_agent.py", line 441, in build_html
+    return HTML_WRAP.format(
+           ^^^^^^^^^
+NameError: name 'HTML_WRAP' is not defined
+2026-05-31 13:01:57,340 INFO 
+==================================================
+User slug: test_user
+2026-05-31 13:01:57,342 INFO   Processing: Chanel Richardson | resume: yes | CLs: 0
+2026-05-31 13:01:57,342 INFO   Step 1: Identifying target companies...
+2026-05-31 13:02:04,655 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 13:02:04,674 INFO   Step 1 complete â€” identified companies
+2026-05-31 13:02:04,675 INFO   Step 2: Searching target companies for open roles...
+2026-05-31 13:03:48,025 INFO 
+==================================================
+User slug: test_user
+2026-05-31 13:03:48,027 INFO   Processing: Chanel Richardson | resume: yes | CLs: 0
+2026-05-31 13:03:48,027 INFO   Step 1: Identifying target companies...
+2026-05-31 13:03:48,969 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 13:03:48,973 INFO Retrying request to /v1/messages in 0.426606 seconds
+2026-05-31 13:03:49,564 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 13:03:49,565 INFO Retrying request to /v1/messages in 0.979314 seconds
+2026-05-31 13:03:50,680 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 13:03:50,682 ERROR   Failed for Chanel Richardson: Error code: 429 - {'type': 'error', 'error': {'type': 'rate_limit_error', 'message': "This request would exceed your organization's rate limit of 50,000 input tokens per minute (org: 9c7b0652-7ead-484c-9f26-bfd38dba4ae6, model: claude-haiku-4-5-20251001). For details, refer to: https://docs.claude.com/en/api/rate-limits. You can see the response headers for current usage. Reduce the prompt length or the maximum tokens requested, or try again later. View your current limits at https://console.anthropic.com/settings/limits. To raise this limit, purchase credits to advance to the next usage tier at https://console.anthropic.com/settings/billing."}, 'request_id': 'req_011Cbb1TpSdHzhC15Cf2329D'}
+Traceback (most recent call last):
+  File "C:\Users\crich\Documents\GitHub\mom-job-agent\agent\job_agent.py", line 515, in process_user
+    data = search_jobs(client, profile, today_str)
+  File "C:\Users\crich\Documents\GitHub\mom-job-agent\agent\job_agent.py", line 312, in search_jobs
+    company_findings = claude(client, company_prompt, web=False, max_tokens=1000)
+  File "C:\Users\crich\Documents\GitHub\mom-job-agent\agent\job_agent.py", line 145, in claude
+    r = client.messages.create(**kwargs)
+  File "C:\Users\crich\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\anthropic\_utils\_utils.py", line 294, in wrapper
+    return func(*args, **kwargs)
+  File "C:\Users\crich\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\anthropic\resources\messages\messages.py", line 1006, in create
+    return self._post(
+           ~~~~~~~~~~^
+        "/v1/messages",
+        ^^^^^^^^^^^^^^^
+    ...<30 lines>...
+        stream_cls=Stream[RawMessageStreamEvent],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\crich\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\anthropic\_base_client.py", line 1374, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\crich\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\anthropic\_base_client.py", line 1147, in request
+    raise self._make_status_error_from_response(err.response) from None
+anthropic.RateLimitError: Error code: 429 - {'type': 'error', 'error': {'type': 'rate_limit_error', 'message': "This request would exceed your organization's rate limit of 50,000 input tokens per minute (org: 9c7b0652-7ead-484c-9f26-bfd38dba4ae6, model: claude-haiku-4-5-20251001). For details, refer to: https://docs.claude.com/en/api/rate-limits. You can see the response headers for current usage. Reduce the prompt length or the maximum tokens requested, or try again later. View your current limits at https://console.anthropic.com/settings/limits. To raise this limit, purchase credits to advance to the next usage tier at https://console.anthropic.com/settings/billing."}, 'request_id': 'req_011Cbb1TpSdHzhC15Cf2329D'}
+2026-05-31 13:07:57,393 INFO 
+==================================================
+User slug: test_user
+2026-05-31 13:07:57,395 INFO   Processing: Chanel Richardson | resume: yes | CLs: 2
+2026-05-31 13:07:57,395 INFO   Step 1: Identifying target companies...
+2026-05-31 13:08:06,823 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 13:08:06,842 INFO   Step 1 complete â€” identified companies
+2026-05-31 13:08:06,843 INFO   Step 2: Searching target companies for open roles...
+2026-05-31 13:08:12,226 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 13:08:12,230 INFO   Step 2 complete â€” got 1778 chars
+2026-05-31 13:08:12,230 INFO   Step 3: Formatting as JSON...
+2026-05-31 13:08:21,284 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 13:08:45,542 INFO 
+==================================================
+User slug: test_user
+2026-05-31 13:08:45,543 INFO   Processing: Chanel Richardson | resume: yes | CLs: 2
+2026-05-31 13:08:45,543 INFO   Step 1: Identifying target companies...
+2026-05-31 13:08:53,607 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 13:08:53,621 INFO   Step 1 complete â€” identified companies
+2026-05-31 13:08:53,621 INFO   Step 2: Searching target companies for open roles...
+2026-05-31 13:09:25,348 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 13:09:25,495 INFO   Step 2 complete â€” got 7728 chars
+2026-05-31 13:09:25,495 INFO   Step 3: Formatting as JSON...
+2026-05-31 13:09:25,695 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 13:09:25,696 INFO Retrying request to /v1/messages in 0.465106 seconds
+2026-05-31 13:09:26,408 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 13:09:26,408 INFO Retrying request to /v1/messages in 0.915754 seconds
+2026-05-31 13:09:27,482 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 13:09:27,483 WARNING   Rate limited â€” waiting 30s before retry 1...
+2026-05-31 13:09:57,782 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 13:09:57,783 INFO Retrying request to /v1/messages in 0.453868 seconds
+2026-05-31 13:09:58,385 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 13:09:58,386 INFO Retrying request to /v1/messages in 0.774548 seconds
+2026-05-31 13:09:59,303 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 13:09:59,304 WARNING   Rate limited â€” waiting 60s before retry 2...
+2026-05-31 13:10:59,701 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 13:10:59,723 INFO Retrying request to /v1/messages in 0.435548 seconds
+2026-05-31 13:11:00,304 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 13:11:00,304 INFO Retrying request to /v1/messages in 0.833092 seconds
+2026-05-31 13:11:01,446 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-05-31 13:11:01,461 WARNING   Rate limited â€” waiting 120s before retry 3...
+2026-05-31 13:13:25,677 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 13:13:25,721 INFO   -> Data Engineer @ Catalist
+2026-05-31 13:13:31,560 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 13:13:36,498 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 13:13:40,308 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 13:13:40,311 INFO   -> Data Operations Engineer @ Catalist
+2026-05-31 13:13:45,830 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 13:13:51,381 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 13:13:56,042 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 13:13:56,044 INFO   -> Data Services Engineer @ Catalist
+2026-05-31 13:14:02,138 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 13:14:07,498 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 13:14:11,918 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 13:14:11,921 INFO   -> Data Visualization & Analysis (Visual Journalist) @ Axios
+2026-05-31 13:14:17,330 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 13:14:22,468 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 13:14:26,583 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-05-31 13:14:28,110 INFO   Sent to crichardson1399@gmail.com

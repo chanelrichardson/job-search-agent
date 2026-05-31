@@ -1,17 +1,15 @@
 /**
  * POST /api/register
  *
- * Receives a user profile (with base64-encoded resume + cover letter files),
- * commits them to the private job-agent-users GitHub repo, and returns success.
+ * Receives a user profile, commits it to the private job-agent-users repo.
  *
- * Environment variables required on Vercel:
- *   GITHUB_TOKEN        - Personal access token with repo write access to the private data repo
- *   GITHUB_DATA_REPO    - e.g. "yourusername/job-agent-users"
- *   ANTHROPIC_API_KEY   - Used server-side to parse the natural language intake
+ * Vercel env vars required:
+ *   GITHUB_TOKEN       — PAT with write access to the private data repo
+ *   GITHUB_DATA_REPO   — "owner/job-agent-users"
+ *   ANTHROPIC_API_KEY  — for parsing natural language criteria server-side
  */
 
 export default async function handler(req, res) {
-  // CORS for local dev
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -19,129 +17,105 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const GITHUB_TOKEN     = process.env.GITHUB_TOKEN;
-  const GITHUB_DATA_REPO = process.env.GITHUB_DATA_REPO; // "owner/repo"
+  const GITHUB_DATA_REPO = process.env.GITHUB_DATA_REPO;
   const ANTHROPIC_KEY    = process.env.ANTHROPIC_API_KEY;
 
-  if (!GITHUB_TOKEN || !GITHUB_DATA_REPO) {
-    return res.status(500).json({ error: 'Server misconfigured — contact the admin.' });
-  }
+  // Surface config errors clearly
+  if (!GITHUB_TOKEN)     return res.status(500).json({ error: 'GITHUB_TOKEN not set in Vercel environment variables.' });
+  if (!GITHUB_DATA_REPO) return res.status(500).json({ error: 'GITHUB_DATA_REPO not set in Vercel environment variables.' });
 
   try {
-    const body = req.body;
-    const { name, email, schedule, naturalLanguageRequest, resumeBase64, resumeFilename, coverLetterBase64, coverLetterFilename, existingSlug } = body;
+    const {
+      name, email, schedule,
+      naturalLanguageRequest,
+      resumeBase64, resumeFilename,
+      coverLetters,        // array of { b: base64, f: filename }
+      existingSlug,
+    } = req.body || {};
 
-    if (!name || !email || !naturalLanguageRequest) {
-      return res.status(400).json({ error: 'Name, email, and job description are required.' });
-    }
+    if (!name)  return res.status(400).json({ error: 'Name is required.' });
+    if (!email) return res.status(400).json({ error: 'Email is required.' });
 
-    // 1. Parse natural language → structured criteria (server-side, API key never exposed)
-    const criteria = await parseCriteria(naturalLanguageRequest, name, ANTHROPIC_KEY);
+    // Parse criteria — use whatever we have (chat text, or empty fallback)
+    const criteria = await parseCriteria(naturalLanguageRequest || '', name, ANTHROPIC_KEY);
 
-    // 2. Build the user profile object
-    // Use existingSlug if this is an update from a returning user
     const slug = existingSlug || name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+
+    const clArray = Array.isArray(coverLetters) ? coverLetters : [];
     const profile = {
       name,
       email,
       schedule: schedule || 'weekly',
-      resume_file: resumeFilename || null,       // filename stored alongside
-      cover_letter_file: coverLetterFilename || null,
+      resume_file:         resumeFilename || null,
+      cover_letter_files:  clArray.map(f => f.f),  // array of filenames
       criteria,
       registered_at: new Date().toISOString(),
     };
 
-    // 3. Commit files to the private data repo
-    const commits = [];
-
-    // Profile JSON
-    commits.push(commitFile(
-      GITHUB_TOKEN,
-      GITHUB_DATA_REPO,
+    // Commit profile.json first (always)
+    await commitFile(
+      GITHUB_TOKEN, GITHUB_DATA_REPO,
       `users/${slug}/profile.json`,
       JSON.stringify(profile, null, 2),
       `Add/update profile for ${name}`
-    ));
+    );
 
-    // Resume file (if provided)
+    // Commit resume if uploaded — strip data URL prefix if present
     if (resumeBase64 && resumeFilename) {
-      commits.push(commitFile(
-        GITHUB_TOKEN,
-        GITHUB_DATA_REPO,
+      const cleanB64 = stripDataUrlPrefix(resumeBase64);
+      await commitFile(
+        GITHUB_TOKEN, GITHUB_DATA_REPO,
         `users/${slug}/${resumeFilename}`,
-        resumeBase64,
+        cleanB64,
         `Upload resume for ${name}`,
-        true // already base64
-      ));
-    }
-
-    // Cover letter file (if provided)
-    if (coverLetterBase64 && coverLetterFilename) {
-      commits.push(commitFile(
-        GITHUB_TOKEN,
-        GITHUB_DATA_REPO,
-        `users/${slug}/${coverLetterFilename}`,
-        coverLetterBase64,
-        `Upload cover letter for ${name}`,
         true
-      ));
+      );
     }
 
-    await Promise.all(commits);
+    // Commit all cover letters
+    for (const cl of clArray) {
+      if (!cl.b || !cl.f) continue;
+      const cleanB64 = stripDataUrlPrefix(cl.b);
+      await commitFile(
+        GITHUB_TOKEN, GITHUB_DATA_REPO,
+        `users/${slug}/${cl.f}`,
+        cleanB64,
+        `Upload cover letter for ${name}: ${cl.f}`,
+        true
+      );
+    }
 
-    return res.status(200).json({
-      success: true,
-      message: `Profile saved for ${name}. You'll receive your first digest on your next scheduled run.`,
-      slug,
-      criteria, // send back so the UI can show a preview
-    });
+    return res.status(200).json({ success: true, slug, criteria });
 
   } catch (err) {
+    // Return the ACTUAL error so it's visible in the UI during testing
     console.error('Register error:', err);
-    return res.status(500).json({ error: 'Failed to save profile. Please try again.' });
+    return res.status(500).json({
+      error: err.message || 'Unknown error',
+    });
   }
 }
 
-/**
- * Call Claude Haiku server-side to parse natural language into structured criteria.
- */
+// Strip "data:application/pdf;base64," prefix if the browser included it
+function stripDataUrlPrefix(b64) {
+  const comma = b64.indexOf(',');
+  return comma !== -1 ? b64.slice(comma + 1) : b64;
+}
+
 async function parseCriteria(naturalLanguage, name, apiKey) {
-  if (!apiKey) {
-    // Fallback: return minimal criteria if no API key configured
+  // If no API key or no text, return a safe empty criteria object
+  if (!apiKey || !naturalLanguage.trim()) {
     return {
       target_titles: [],
       min_salary: 'Not specified',
       location_preference: 'Remote',
       industry_focus: [],
       experience_level: 'Senior',
-      special_instructions: naturalLanguage,
+      special_instructions: naturalLanguage || '',
       recency_days: 7,
       exclude_keywords: ['Entry Level', 'Intern', 'Assistant'],
     };
   }
-
-  const prompt = `Extract structured job search criteria from this description. Return ONLY valid JSON, no markdown, no explanation.
-
-User: ${name}
-Description: ${naturalLanguage}
-
-Return this exact structure:
-{
-  "target_titles": ["title1", "title2"],
-  "min_salary": "$XXX,000",
-  "location_preference": "Remote / Hybrid / On-site and city",
-  "industry_focus": ["Industry1", "Industry2"],
-  "experience_level": "Senior (X years)",
-  "special_instructions": "Any specific requirements, company types, must-haves",
-  "recency_days": 7,
-  "exclude_keywords": ["Entry Level", "Intern"]
-}
-
-Rules:
-- target_titles: include all mentioned + obvious variations (VP Events → also Director of Events, Head of Events)
-- min_salary: use lower bound if range given, format as "$X00,000"
-- industry_focus: use standard categories: Tech, Healthcare, Finance, Associations, Hospitality, Nonprofit, Media, Education, Government, Events, Corporate, Consulting, Legal, Fintech, Real Estate
-- exclude_keywords: always include Entry Level and Intern, add others implied
-- special_instructions: capture nuance — company size, must-haves, deal-breakers, preferences`;
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -153,53 +127,56 @@ Rules:
     body: JSON.stringify({
       model: 'claude-haiku-4-5',
       max_tokens: 800,
-      messages: [{ role: 'user', content: prompt }],
+      messages: [{
+        role: 'user',
+        content: `Extract structured job search criteria from this description. Return ONLY valid JSON.
+
+User: ${name}
+Description: ${naturalLanguage}
+
+Return exactly this structure, no markdown, no explanation:
+{"target_titles":["title1"],"min_salary":"$X00,000","location_preference":"Remote/Hybrid/City","industry_focus":["Industry"],"experience_level":"Senior (X years)","special_instructions":"any nuance","recency_days":7,"exclude_keywords":["Entry Level","Intern"]}`,
+      }],
     }),
   });
 
   const data = await response.json();
+  if (!response.ok) throw new Error(`Anthropic error: ${data.error?.message || JSON.stringify(data)}`);
+
   const text = data.content?.[0]?.text || '{}';
   const clean = text.replace(/```json|```/g, '').trim();
   const start = clean.indexOf('{');
-  const end = clean.lastIndexOf('}') + 1;
+  const end   = clean.lastIndexOf('}') + 1;
+  if (start === -1) throw new Error('Claude did not return valid JSON for criteria');
   return JSON.parse(clean.slice(start, end));
 }
 
-/**
- * Commit a single file to GitHub via the Contents API.
- * If the file already exists, fetches its SHA and updates it.
- */
 async function commitFile(token, repo, path, content, message, isAlreadyBase64 = false) {
-  const base = `https://api.github.com/repos/${repo}/contents/${path}`;
+  const url = `https://api.github.com/repos/${repo}/contents/${path}`;
   const headers = {
     Authorization: `token ${token}`,
     Accept: 'application/vnd.github+json',
     'Content-Type': 'application/json',
   };
 
-  // Check if file exists (need SHA to update)
+  // Get existing SHA if file already exists (required for updates)
   let sha;
-  try {
-    const existing = await fetch(base, { headers });
-    if (existing.ok) {
-      const data = await existing.json();
-      sha = data.sha;
-    }
-  } catch (_) {}
+  const existing = await fetch(url, { headers });
+  if (existing.ok) {
+    sha = (await existing.json()).sha;
+  } else if (existing.status !== 404) {
+    // 404 = file doesn't exist yet (fine). Anything else = real problem.
+    const errBody = await existing.json().catch(() => ({}));
+    throw new Error(`GitHub read failed for ${path}: ${existing.status} ${JSON.stringify(errBody)}`);
+  }
 
   const encoded = isAlreadyBase64 ? content : Buffer.from(content).toString('base64');
-
   const body = { message, content: encoded };
   if (sha) body.sha = sha;
 
-  const res = await fetch(base, {
-    method: 'PUT',
-    headers,
-    body: JSON.stringify(body),
-  });
-
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(`GitHub API error for ${path}: ${JSON.stringify(err)}`);
+  const put = await fetch(url, { method: 'PUT', headers, body: JSON.stringify(body) });
+  if (!put.ok) {
+    const errBody = await put.json().catch(() => ({}));
+    throw new Error(`GitHub write failed for ${path}: ${put.status} ${JSON.stringify(errBody)}`);
   }
 }

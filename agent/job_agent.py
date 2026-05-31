@@ -23,8 +23,17 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from anthropic import Anthropic
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s",
-    handlers=[logging.FileHandler("job_agent.log"), logging.StreamHandler()])
+import sys
+_stream_handler = logging.StreamHandler(sys.stdout)
+_stream_handler.stream.reconfigure(encoding='utf-8', errors='replace') if hasattr(_stream_handler.stream, 'reconfigure') else None
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(message)s",
+    handlers=[
+        logging.FileHandler("job_agent.log", encoding="utf-8"),
+        _stream_handler,
+    ]
+)
 log = logging.getLogger(__name__)
 
 MODEL              = "claude-haiku-4-5"
@@ -98,25 +107,117 @@ def load_user(slug):
     if not txt: return None
     profile = json.loads(txt)
     rf = profile.get("resume_file")
-    cf = profile.get("cover_letter_file")
-    profile["_resume"]     = gh_get_text(f"users/{slug}/{rf}") or "" if rf else ""
-    profile["_cover_letter"] = gh_get_text(f"users/{slug}/{cf}") or "" if cf else ""
+    profile["_resume"] = gh_get_text(f"users/{slug}/{rf}") or "" if rf else ""
+
+    # Load all cover letters into a list
+    cl_files = profile.get("cover_letter_files") or []
+    # Support legacy single cover_letter_file field too
+    if not cl_files and profile.get("cover_letter_file"):
+        cl_files = [profile["cover_letter_file"]]
+    cl_texts = []
+    for clf in cl_files:
+        text = gh_get_text(f"users/{slug}/{clf}")
+        if text and text.strip():
+            cl_texts.append(text.strip())
+    profile["_cover_letters"] = cl_texts  # list of strings
     return profile
 
 # ── Claude helpers ─────────────────────────────────────────────────────────────
-def claude(client, prompt, web=False):
-    kwargs = dict(model=MODEL, max_tokens=2000, messages=[{"role":"user","content":prompt}])
+def claude_with_retry(client, prompt, web=False, max_tokens=2000):
+    """Call Claude with automatic backoff on rate limit errors."""
+    import time
+    delays = [30, 60, 120]  # seconds to wait on each successive 429
+    for attempt, delay in enumerate(delays + [None]):
+        try:
+            return claude(client, prompt, web=web, max_tokens=max_tokens)
+        except Exception as e:
+            if "rate_limit" in str(e).lower() or "429" in str(e):
+                if delay is None:
+                    raise  # out of retries
+                log.warning(f"  Rate limited — waiting {delay}s before retry {attempt + 1}...")
+                time.sleep(delay)
+            else:
+                raise
+
+def claude(client, prompt, web=False, max_tokens=2000):
+    kwargs = dict(model=MODEL, max_tokens=max_tokens, messages=[{"role":"user","content":prompt}])
     if web: kwargs["tools"] = [{"type":"web_search_20250305","name":"web_search"}]
     r = client.messages.create(**kwargs)
     return "".join(b.text for b in r.content if hasattr(b,"text")).strip()
 
 def parse_json(text):
-    c = text.replace("```json","").replace("```","").strip()
-    s, e = c.find("{"), c.rfind("}")+1
-    if s<0 or e==0: raise ValueError(f"No JSON in: {text[:200]}")
-    return json.loads(c[s:e])
+    import re as _re
+    c = text.replace("```json", "").replace("```", "").strip()
+    s = c.find("{")
+    if s < 0:
+        raise ValueError(f"No JSON found in response.\nGot:\n{text[:400]}")
 
-# ── Per-job generation ─────────────────────────────────────────────────────────
+    raw = c[s:]
+
+    # First attempt: find the last valid closing brace
+    # Try progressively shorter substrings if full parse fails
+    for end_idx in range(len(raw), 0, -1):
+        if raw[end_idx-1] != '}':
+            continue
+        candidate = raw[:end_idx]
+        try:
+            return json.loads(candidate)
+        except json.JSONDecodeError:
+            continue
+
+    # If that failed entirely, try common fixes on the full string
+    e = raw.rfind("}") + 1
+    raw = raw[:e]
+
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError as exc:
+        char = exc.pos
+        snippet = raw[max(0, char - 150):char + 150]
+        log.error(f"JSON parse error at char {char}: {exc.msg}")
+        log.error(f"Context around error: ...{snippet}...")
+
+        # Fix 1: smart quotes
+        fixed = raw
+        fixed = fixed.replace("\u201c", '"').replace("\u201d", '"')
+        fixed = fixed.replace("\u2018", "'").replace("\u2019", "'")
+
+        # Fix 2: trailing commas before ] or }
+        fixed = _re.sub(r',\s*([}\]])', r'\1', fixed)
+
+        # Fix 3: newlines inside string values
+        fixed = _re.sub(
+            r'"([^"]*)"',
+            lambda m: '"' + m.group(1).replace("\n", " ").replace("\r", "") + '"',
+            fixed
+        )
+
+        try:
+            return json.loads(fixed)
+        except json.JSONDecodeError:
+            # Last resort: extract just the jobs and proactive_targets arrays
+            # so we get partial results rather than total failure
+            try:
+                jobs_match = _re.search(r'"jobs"\s*:\s*(\[.*?\])(?=\s*,|\s*})', fixed, _re.DOTALL)
+                pro_match  = _re.search(r'"proactive_targets"\s*:\s*(\[.*?\])(?=\s*})', fixed, _re.DOTALL)
+                msg_match  = _re.search(r'"positive_message"\s*:\s*"([^"]*)"', fixed)
+                result = {
+                    "positive_message": msg_match.group(1) if msg_match else "Great opportunities found today!",
+                    "jobs": json.loads(jobs_match.group(1)) if jobs_match else [],
+                    "proactive_targets": json.loads(pro_match.group(1)) if pro_match else [],
+                }
+                log.warning(f"Used partial JSON recovery — got {len(result['jobs'])} jobs")
+                return result
+            except Exception:
+                pass
+
+            raise ValueError(
+                f"Could not parse JSON after all repair attempts.\n"
+                f"Error at char {char}: {exc.msg}\n"
+                f"Context: ...{snippet}..."
+            )
+
+
 def tailor_resume(client, profile, job):
     if not profile["_resume"]:
         return "No resume uploaded — visit the signup form to add yours."
@@ -131,24 +232,35 @@ DESCRIPTION: {job.get('description')}
 Instructions: Move the most relevant accomplishments to the top. Strengthen the summary to speak to this role. Keep the same length and format. Return the full tailored resume text only.""")
 
 def write_cover_letter(client, profile, job):
-    voice = f"\nCANDIDATE'S EXISTING COVER LETTER (match this voice exactly):\n{profile['_cover_letter']}" if profile["_cover_letter"] else ""
+    samples = profile.get("_cover_letters", [])
+    if samples:
+        # Format multiple samples with separators so Claude can study voice patterns
+        numbered = "\n\n---\n\n".join(
+            f"SAMPLE {i+1}:\n{s}" for i, s in enumerate(samples)
+        )
+        voice_block = f"""
+CANDIDATE'S COVER LETTER SAMPLES ({len(samples)} provided — study these to match their voice, tone, structure, and word choices. Do not copy content, only style):
+{numbered}"""
+    else:
+        voice_block = ""
+
     return claude(client, f"""Write a cover letter for {profile['name']} applying to {job.get('title')} at {job.get('organization')}.
 
 RESUME:
-{profile['_resume'] or 'Not provided — use the why_fit section below'}
-{voice}
+{profile['_resume'] or 'Not provided — use the why_fit context below'}
+{voice_block}
 
 ROLE: {job.get('description')}
 WHY THEY FIT: {job.get('why_fit')}
 
 Requirements:
 - 3 paragraphs: compelling hook, specific value proof with real numbers, confident close
-- Never open "I am excited to apply" or any cliché
-- Match the voice from their existing cover letter if provided
-- Under 260 words, senior executive register
-- End with candidate's name only
+- Never open with "I am excited to apply" or any cliché variation
+- {"Match the voice, rhythm, and phrasing patterns from the samples above — same person, different role" if samples else "Professional senior executive register"}
+- Under 260 words
+- End with the candidate's name only — no "Sincerely," or similar
 
-Return only the cover letter text.""")
+Return only the cover letter text, nothing else.""")
 
 def prefill_app(client, profile, job):
     try:
@@ -159,27 +271,135 @@ Return ONLY valid JSON: {{"desired_salary":"","availability":"2 weeks notice","y
 
 def search_jobs(client, profile, today_str):
     criteria = profile.get("criteria", {})
-    srcs = sources_for(criteria)
-    return parse_json(claude(client, f"""You are a job search agent for {profile['name']}.
-RESUME: {profile['_resume'] or 'See criteria'}
-CRITERIA:
-- Titles: {", ".join(criteria.get("target_titles",[]))}
-- Min salary: {criteria.get("min_salary","Not specified")}
-- Location: {criteria.get("location_preference","Remote")}
-- Industries: {", ".join(criteria.get("industry_focus",[]))}
-- Experience: {criteria.get("experience_level","Senior")}
-- Requirements: {criteria.get("special_instructions","")}
-- Exclude: {", ".join(criteria.get("exclude_keywords",[]))}
-- Max age: {criteria.get("recency_days",7)} days
-SEARCH THESE SOURCES:
-{chr(10).join(f"  - {s}" for s in srcs)}
-TODAY: {today_str}
-Search each source. Prioritize niche boards over LinkedIn.
-Return ONLY valid JSON:
-{{"positive_message":"2-3 warm sentences for {profile['name']}.","jobs":[{{"title":"","organization":"","type":"Full-time","location":"","salary":"","posted":"","source":"","source_url":"","description":"","why_fit":"","network_angle":"","apply_url":""}}],"proactive_targets":[{{"organization":"","sector":"","why":"","approach":"","contact_type":""}}]}}
-Find 3-5 roles and 3-5 proactive targets.""", web=True))
+    name = profile["name"]
+    resume_snippet = (profile["_resume"] or "")[:600]
 
-# ── Email templates ────────────────────────────────────────────────────────────
+    titles_str   = ", ".join(criteria.get("target_titles", []))
+    salary_str   = criteria.get("min_salary", "not specified")
+    location_str = criteria.get("location_preference", "Remote")
+    sectors_str  = ", ".join(criteria.get("industry_focus", []))
+    special_str  = criteria.get("special_instructions", "")
+    exclude_str  = ", ".join(criteria.get("exclude_keywords", []))
+
+    # ── STEP 1: Identify specific target companies ──────────────────────────
+    # Ask Claude to reason about WHO should hire this person — not to scrape boards
+    company_prompt = f"""You are a senior recruiter helping {name} find their next role.
+
+CANDIDATE BACKGROUND:
+{resume_snippet}
+
+WHAT THEY WANT:
+- Titles: {titles_str}
+- Min salary: {salary_str}
+- Location: {location_str}
+- Industries: {sectors_str}
+- Requirements: {special_str}
+- Exclude: {exclude_str}
+
+Your job: identify 8-12 SPECIFIC, NAMED companies or organizations that:
+1. Actively hire people with this exact background
+2. Are known to pay {salary_str}+ for these roles
+3. Fit the location preference
+4. Match the industries
+
+Think carefully about the candidate's specific background. Don't suggest generic large employers — suggest organizations where THIS person's specific combination of skills is genuinely valuable.
+
+For each company write one line: Company Name | Why they're a fit | Type (startup/nonprofit/enterprise/gov)
+
+Then separately list 3-4 specific niche job boards or communities where these roles are actually posted (not LinkedIn/Indeed — think specific industry boards, Slack communities, newsletters, etc.)"""
+
+    log.info("  Step 1: Identifying target companies...")
+    company_findings = claude(client, company_prompt, web=False, max_tokens=1000)
+    log.info(f"  Step 1 complete — identified companies")
+
+    # ── STEP 2: Search those specific companies for open roles ──────────────
+    search_prompt = f"""You are searching for real, current job openings for {name}.
+
+TODAY: {today_str}
+
+TARGET COMPANIES identified as strong fits:
+{company_findings}
+
+SEARCH TASK:
+For each company above, search their actual careers page and any job boards for current openings matching:
+- Titles like: {titles_str}
+- Location: {location_str}
+- Posted within the last 14 days
+
+For each real opening you find, note:
+- Exact job title
+- Company name
+- Location / remote status
+- Salary if listed
+- Direct URL to the job posting (careers.company.com/jobs/... NOT a search results URL)
+- Date posted
+- 2-3 sentence description
+
+If a company has no current openings, note that — don't make up a URL.
+If you find a real job, the URL must go directly to THAT specific job posting, not a search page.
+
+Also note which of these companies seem to be actively hiring right now vs quiet."""
+
+    log.info("  Step 2: Searching target companies for open roles...")
+    raw_findings = claude(client, search_prompt, web=True, max_tokens=2000)
+    log.info(f"  Step 2 complete — got {len(raw_findings)} chars")
+
+    # ── STEP 3: Format into JSON ─────────────────────────────────────────────
+    format_prompt = f"""Convert these job search findings into JSON. Output ONLY the JSON — no text before or after.
+
+CANDIDATE: {name}
+TODAY: {today_str}
+
+COMPANY RESEARCH:
+{company_findings}
+
+JOB FINDINGS:
+{raw_findings}
+
+IMPORTANT RULES FOR QUALITY:
+- Only include jobs where you found a REAL, SPECIFIC job posting URL (not a search page like indeed.com/jobs?q=...)
+- If a URL is a search results page, put it in proactive_targets instead, not jobs
+- "Not listed" is acceptable for salary — never make one up
+- For companies with no open roles, put them in proactive_targets
+- proactive_targets should be companies worth monitoring or reaching out to cold
+
+Output this exact JSON:
+{{
+  "positive_message": "2-3 warm sentences for {name} referencing their specific background and today's date.",
+  "jobs": [
+    {{
+      "title": "Exact job title from posting",
+      "organization": "Company name",
+      "type": "Full-time",
+      "location": "Remote / Hybrid / On-site + city",
+      "salary": "$X — $Y or Not listed",
+      "posted": "X days ago or Month Day",
+      "source": "Company careers page / LinkedIn / etc",
+      "source_url": "https://direct-link-to-this-specific-job",
+      "description": "What this role actually does — one paragraph, no newlines",
+      "why_fit": "How this candidate's specific background maps to this role — one paragraph",
+      "network_angle": "Who they might know or how to get a warm intro",
+      "apply_url": "https://direct-application-link"
+    }}
+  ],
+  "proactive_targets": [
+    {{
+      "organization": "Company name",
+      "sector": "Industry",
+      "why": "Why this company is a strong fit for this candidate specifically",
+      "approach": "How to reach out — email, LinkedIn, mutual connection, etc",
+      "contact_type": "Title of the right person to contact"
+    }}
+  ]
+}}
+
+Include whatever real jobs were found (0-5). Fill proactive_targets with the remaining strong-fit companies (3-6 total).
+Every string value must be on ONE line. No trailing commas. Straight double quotes only."""
+
+    log.info("  Step 3: Formatting as JSON...")
+    return parse_json(claude_with_retry(client, format_prompt, web=False, max_tokens=4000))
+
+
 HTML_WRAP = """<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
 body{{margin:0;background:#f5f4f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:#2c2c2a}}
 .w{{max-width:680px;margin:0 auto;padding:24px 16px}}
@@ -211,7 +431,7 @@ body{{margin:0;background:#f5f4f0;font-family:-apple-system,BlinkMacSystemFont,'
 <div class="hd"><h1>{name}'s Job Search Digest</h1><p>{today} &middot; {jc} roles &middot; {pc} proactive targets</p></div>
 <div class="pos"><p>{pm}</p></div>
 <div class="bd">
-<p class="sec" style="margin-top:0">Matched roles — tailored resume &amp; cover letter included</p>
+<p class="sec" style="margin-top:0">Matched roles &mdash; tailored resume &amp; cover letter included</p>
 {jobs_html}
 <hr class="dv"><p class="sec">Proactive outreach</p>{pro_html}
 <hr class="dv"><div class="ft2"><p>Sources: {src}</p><p style="margin-top:4px;color:#aaa">{sal}+ &middot; {loc} &middot; Last {rd} days</p></div>
@@ -290,11 +510,11 @@ def process_user(client, slug, today_str):
     name = profile.get("name", slug)
     if not should_run(profile.get("schedule","weekly")):
         log.info(f"  Skipping {name} — schedule doesn't match today"); return
-    log.info(f"  Processing: {name} | resume: {'yes' if profile['_resume'] else 'no'} | CL: {'yes' if profile['_cover_letter'] else 'no'}")
+    log.info(f"  Processing: {name} | resume: {'yes' if profile['_resume'] else 'no'} | CLs: {len(profile.get('_cover_letters', []))}")
     try:
         data = search_jobs(client, profile, today_str)
         for j in data.get("jobs",[]):
-            log.info(f"  → {j.get('title')} @ {j.get('organization')}")
+            log.info(f"  -> {j.get('title')} @ {j.get('organization')}")
             j["_resume"] = tailor_resume(client, profile, j)
             j["_cl"]     = write_cover_letter(client, profile, j)
             j["_app"]    = prefill_app(client, profile, j)

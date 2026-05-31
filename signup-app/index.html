@@ -126,7 +126,7 @@ select option{background:var(--s)}
   <div class="tag">Personal career intelligence</div>
   <div class="steps">
     <div class="stp active" id="s1"><div class="sn"><span class="sn-num">1</span></div><div class="sm"><strong>About you</strong><em>Name &amp; email</em></div></div>
-    <div class="stp" id="s2"><div class="sn"><span class="sn-num">2</span></div><div class="sm"><strong>Your documents</strong><em>Resume &amp; cover letter</em></div></div>
+    <div class="stp" id="s2"><div class="sn"><span class="sn-num">2</span></div><div class="sm"><strong>Your documents</strong><em>Resume &amp; cover letters</em></div></div>
     <div class="stp" id="s3"><div class="sn"><span class="sn-num">3</span></div><div class="sm"><strong>What you want</strong><em>Describe in plain English</em></div></div>
     <div class="stp" id="s4"><div class="sn"><span class="sn-num">4</span></div><div class="sm"><strong>Schedule</strong><em>How often to run</em></div></div>
   </div>
@@ -169,7 +169,7 @@ select option{background:var(--s)}
   <div class="panel" id="p2">
     <div class="ey">Step 2 of 4</div>
     <h1 class="h1">Upload your <em>documents.</em></h1>
-    <p class="sub">Your resume is used to write a tailored cover letter and pre-fill applications for every role we find. Your existing cover letter helps calibrate your voice and tone. Both are stored privately — never in the public repo.</p>
+    <p class="sub">Your resume powers the tailored highlights and application pre-fill for every role. Upload as many cover letters as you like — the more variety, the better the agent can calibrate to your voice across different tones and industries.</p>
     <div class="fd">
       <label>Resume <span class="n">PDF, DOC, DOCX, or TXT</span></label>
       <div class="uz" id="rz">
@@ -181,14 +181,17 @@ select option{background:var(--s)}
       <div class="ud" id="rd"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg><span id="rn"></span><button onclick="clearFile('r')">&times;</button></div>
     </div>
     <div class="fd" style="margin-top:8px">
-      <label>Cover letter <span class="n">optional — helps calibrate your writing voice</span></label>
-      <div class="uz" id="cz">
-        <input type="file" id="cf" accept=".pdf,.doc,.docx,.txt" onchange="fileChosen('c')">
+      <label>Cover letters <span class="n">optional — upload multiple for better voice calibration</span></label>
+      <div class="uz" id="cz" onclick="document.getElementById('cf').click()">
+        <input type="file" id="cf" accept=".pdf,.doc,.docx,.txt" multiple style="display:none" onchange="clFilesChosen(this.files)">
         <div class="ui"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
-        <div class="ul">Drop your cover letter here or click to browse</div>
-        <div class="uh">PDF, DOC, DOCX, or TXT — up to 5MB</div>
+        <div class="ul">Drop cover letters here or click to browse</div>
+        <div class="uh">Upload 1–5 cover letters — more samples = better voice match</div>
       </div>
-      <div class="ud" id="cd"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg><span id="cn"></span><button onclick="clearFile('c')">&times;</button></div>
+      <div id="cl-list" style="display:flex;flex-direction:column;gap:6px;margin-top:8px"></div>
+      <div id="cl-add-btn" style="display:none;margin-top:8px">
+        <button class="btn bg" style="font-size:12px;padding:6px 14px" onclick="document.getElementById('cf').click()">+ Add another cover letter</button>
+      </div>
     </div>
     <div class="nav"><button class="btn bg" onclick="go(1)">&larr; Back</button><button class="btn bgo" onclick="go(3)">Continue &rarr;</button></div>
   </div>
@@ -242,7 +245,7 @@ select option{background:var(--s)}
 </main>
 </div>
 <script>
-let step=1,sched='weekly',crit=null,hist=[],rData={b:null,f:null},cData={b:null,f:null},ini='';
+let step=1,sched='weekly',crit=null,hist=[],rData={b:null,f:null},clFiles=[],ini='';
 const SYS=`You are a job search intake assistant. Extract structured job search criteria from what the user describes.
 
 RESPONSE FORMAT — always two parts in this exact order:
@@ -375,19 +378,58 @@ function next1(){
 }
 function ps(el){document.querySelectorAll('.si').forEach(i=>i.classList.remove('on'));el.classList.add('on');sched=el.dataset.v;}
 function fileChosen(w){
-  const inp=document.getElementById(w==='r'?'rf':'cf');
+  // legacy — only used for resume now
+  const inp=document.getElementById('rf');
   const file=inp.files[0];if(!file)return;
   const rd=new FileReader();
   rd.onload=e=>{
     const b=e.target.result.split(',')[1];
-    if(w==='r'){rData={b,f:file.name};document.getElementById('rn').textContent=file.name;document.getElementById('rd').style.display='flex';document.getElementById('rz').style.display='none';}
-    else{cData={b,f:file.name};document.getElementById('cn').textContent=file.name;document.getElementById('cd').style.display='flex';document.getElementById('cz').style.display='none';}
+    rData={b,f:file.name};
+    document.getElementById('rn').textContent=file.name;
+    document.getElementById('rd').style.display='flex';
+    document.getElementById('rz').style.display='none';
   };
   rd.readAsDataURL(file);
 }
+function clFilesChosen(files){
+  // Read each cover letter file and add to clFiles array
+  Array.from(files).forEach(file=>{
+    if(clFiles.find(x=>x.f===file.name))return; // skip dupes
+    const rd=new FileReader();
+    rd.onload=e=>{
+      const b=e.target.result.split(',')[1];
+      clFiles.push({b,f:file.name});
+      renderClList();
+    };
+    rd.readAsDataURL(file);
+  });
+  // Reset input so same file can be re-added after removal
+  document.getElementById('cf').value='';
+}
+function renderClList(){
+  const list=document.getElementById('cl-list');
+  const addBtn=document.getElementById('cl-add-btn');
+  if(clFiles.length===0){
+    list.innerHTML='';
+    addBtn.style.display='none';
+    document.getElementById('cz').style.display='block';
+    return;
+  }
+  document.getElementById('cz').style.display='none';
+  list.innerHTML=clFiles.map((f,i)=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--tbg);border:1px solid var(--tdim);border-radius:8px">
+      <svg width="16" height="16" viewBox="0 0 24 24" style="stroke:var(--teal);fill:none;stroke-width:2;flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>
+      <span style="font-size:13px;color:var(--teal);font-weight:500;flex:1">${f.f}</span>
+      <button onclick="removeCl(${i})" style="background:none;border:none;cursor:pointer;color:var(--mu);font-size:16px;line-height:1">&times;</button>
+    </div>`).join('');
+  addBtn.style.display=clFiles.length<5?'block':'none';
+}
+function removeCl(i){
+  clFiles.splice(i,1);
+  renderClList();
+}
 function clearFile(w){
   if(w==='r'){rData={b:null,f:null};document.getElementById('rf').value='';document.getElementById('rd').style.display='none';document.getElementById('rz').style.display='block';}
-  else{cData={b:null,f:null};document.getElementById('cf').value='';document.getElementById('cd').style.display='none';document.getElementById('cz').style.display='block';}
 }
 function ck(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}
 function addMsg(role,text,think){
@@ -453,12 +495,12 @@ async function submit(){
   const email=document.getElementById('f-email').value.trim();
   const chatTxt=hist.filter(m=>m.role==='user').map(m=>m.content).join('\n');
   try{
-    const res=await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,schedule:sched,naturalLanguageRequest:chatTxt||'No description provided.',resumeBase64:rData.b,resumeFilename:rData.f,coverLetterBase64:cData.b,coverLetterFilename:cData.f,existingSlug:returningSlug})});
+    const res=await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,schedule:sched,naturalLanguageRequest:chatTxt||'No description provided.',resumeBase64:rData.b,resumeFilename:rData.f,coverLetters:clFiles,existingSlug:returningSlug})});
     const data=await res.json();
     if(!res.ok)throw new Error(data.error||'Unknown error');
     const c=data.criteria||crit||{};
     const card=document.getElementById('cc');
-    const rows=[['Name',name],['Email',email],['Schedule',{weekly:'Every Monday',daily:'Every weekday',biweekly:'Bi-weekly'}[sched]||sched],['Top titles',(c.target_titles||[]).slice(0,2).join(', ')],['Min salary',c.min_salary||'—'],['Location',c.location_preference||'—'],['Resume',rData.f||'Not uploaded'],['Cover letter',cData.f||'Not uploaded']];
+    const rows=[['Name',name],['Email',email],['Schedule',{weekly:'Every Monday',daily:'Every weekday',biweekly:'Bi-weekly'}[sched]||sched],['Top titles',(c.target_titles||[]).slice(0,2).join(', ')],['Min salary',c.min_salary||'—'],['Location',c.location_preference||'—'],['Resume',rData.f||'Not uploaded'],['Cover letters',clFiles.length>0?clFiles.map(f=>f.f).join(', '):'Not uploaded']];
     card.innerHTML='<h3>Your profile</h3>'+rows.map(([l,v])=>`<div class="ir"><span class="l">${l}</span><span class="v">${v}</span></div>`).join('');
     go(5);
   }catch(e){
@@ -466,16 +508,20 @@ async function submit(){
     btn.disabled=false;lbl.textContent='Set up my agent →';
   }
 }
-['rz','cz'].forEach(id=>{
-  const z=document.getElementById(id);
-  z.addEventListener('dragover',e=>{e.preventDefault();z.classList.add('drag');});
-  z.addEventListener('dragleave',()=>z.classList.remove('drag'));
-  z.addEventListener('drop',e=>{
-    e.preventDefault();z.classList.remove('drag');
-    const w=id==='rz'?'r':'c';
-    const inp=document.getElementById(w==='r'?'rf':'cf');
-    const dt=new DataTransfer();dt.items.add(e.dataTransfer.files[0]);inp.files=dt.files;fileChosen(w);
-  });
+const rzone=document.getElementById('rz');
+rzone.addEventListener('dragover',e=>{e.preventDefault();rzone.classList.add('drag');});
+rzone.addEventListener('dragleave',()=>rzone.classList.remove('drag'));
+rzone.addEventListener('drop',e=>{
+  e.preventDefault();rzone.classList.remove('drag');
+  const dt=new DataTransfer();dt.items.add(e.dataTransfer.files[0]);
+  document.getElementById('rf').files=dt.files;fileChosen('r');
+});
+const czone=document.getElementById('cz');
+czone.addEventListener('dragover',e=>{e.preventDefault();czone.classList.add('drag');});
+czone.addEventListener('dragleave',()=>czone.classList.remove('drag'));
+czone.addEventListener('drop',e=>{
+  e.preventDefault();czone.classList.remove('drag');
+  clFilesChosen(e.dataTransfer.files);
 });
 </script>
 </body>
