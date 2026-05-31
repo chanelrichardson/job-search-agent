@@ -243,14 +243,28 @@ select option{background:var(--s)}
 </div>
 <script>
 let step=1,sched='weekly',crit=null,hist=[],rData={b:null,f:null},cData={b:null,f:null},ini='';
-const SYS=`You are a job search intake assistant. Extract structured criteria from the user's description.
-Respond with a brief acknowledgment (1-2 sentences), then a <criteria> JSON block.
-If salary, location, or titles are missing, ask for ONE specifically.
+const SYS=`You are a job search intake assistant. Extract structured job search criteria from what the user describes.
 
-<criteria> must be valid JSON:
-{"target_titles":["Title1","Title2"],"min_salary":"$130,000","location_preference":"Remote or Hybrid near Chicago, IL","industry_focus":["Associations","Tech"],"experience_level":"Senior (15 years)","special_instructions":"Nuanced requirements","recency_days":7,"exclude_keywords":["Entry Level","Intern","Assistant"]}
+RESPONSE FORMAT — always two parts in this exact order:
+1. One or two conversational sentences acknowledging what you heard. If titles, salary, or location are missing, ask for ONE of them.
+2. A <criteria> block containing ONLY valid JSON — no text before or after the JSON inside the tags.
 
-Rules: include title variations; min_salary lower bound formatted "$X00,000"; industries from: Associations Tech Hospitality Events Nonprofit Healthcare Finance Fintech Media Education Government Corporate Consulting Legal; always include Entry Level Intern in excludes; capture deal-breakers and company preferences in special_instructions. Always output <criteria> block.`;
+EXAMPLE RESPONSE:
+Got it — director-level event roles in associations near Chicago at $150k sounds like a strong focus. Do you have a preference for company size?
+<criteria>
+{"target_titles":["Director of Events","VP of Events","Head of Events"],"min_salary":"$150,000","location_preference":"Hybrid near Chicago, IL","industry_focus":["Associations","Events"],"experience_level":"Senior","special_instructions":"","recency_days":7,"exclude_keywords":["Entry Level","Intern","Assistant","Coordinator"]}
+</criteria>
+
+JSON field rules:
+- target_titles: all titles mentioned plus obvious variations
+- min_salary: lower bound of any range, formatted "$X00,000"  
+- location_preference: include Remote/Hybrid/On-site and city if mentioned
+- industry_focus: use these exact values: Associations, Tech, Hospitality, Events, Nonprofit, Healthcare, Finance, Fintech, Media, Education, Government, Corporate, Consulting, Legal, Foundations
+- exclude_keywords: always include "Entry Level" and "Intern", add any others implied
+- special_instructions: company size, travel tolerance, must-haves, deal-breakers
+- recency_days: 7 unless they say otherwise
+
+IMPORTANT: Always include the <criteria> block in every response, even the first one. The JSON must be valid — no trailing commas, no comments.`;
 
 function go(n){
   document.getElementById(`p${step}`).classList.remove('active');
@@ -408,10 +422,27 @@ async function send(){
     if(!r.ok){th.remove();addMsg('ai','Error: '+(d.error||'Server error — check Vercel function logs.'));document.getElementById('sb').disabled=false;return;}
     const raw=d.text||'';
     hist.push({role:'assistant',content:raw});
-    const m=raw.match(/<criteria>([\s\S]*?)<\/criteria>/);
-    const ch=raw.replace(/<criteria>[\s\S]*?<\/criteria>/,'').trim();
+    // Try to extract <criteria> block (primary method)
+    const m=raw.match(/<criteria>([\s\S]*?)<\/criteria>/i);
+    const ch=raw.replace(/<criteria>[\s\S]*?<\/criteria>/i,'').trim();
     th.remove();if(ch)addMsg('ai',ch);
-    if(m){try{showCrit(JSON.parse(m[1].trim()));}catch(_){}}
+    if(m){
+      try{showCrit(JSON.parse(m[1].trim()));}
+      catch(e){console.warn('criteria parse failed:',e,m[1]);}
+    } else {
+      // Fallback: scan raw text for any JSON object with target_titles key
+      try{
+        const jstart=raw.indexOf('{');
+        const jend=raw.lastIndexOf('}')+1;
+        if(jstart!==-1&&jend>jstart){
+          const candidate=JSON.parse(raw.slice(jstart,jend));
+          if(candidate.target_titles||candidate.min_salary){showCrit(candidate);}
+        }
+      }catch(_){}
+      // Last resort: if we got ANY response from Claude, enable the button
+      // so the user isn't permanently stuck even if parsing fails
+      if(!crit){document.getElementById('n3').disabled=false;}
+    }
   }catch(e){console.error('Chat error:',e);th.remove();addMsg('ai','Network error: '+e.message);}
   document.getElementById('sb').disabled=false;document.getElementById('ct').focus();
 }
