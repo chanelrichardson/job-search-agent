@@ -20,7 +20,7 @@ jobs:
           GMAIL_SENDER:        ${{ secrets.GMAIL_SENDER }}
           GMAIL_APP_PASSWORD:  ${{ secrets.GMAIL_APP_PASSWORD }}
           GITHUB_TOKEN:        ${{ secrets.DATA_REPO_TOKEN }}
-          GITHUB_DATA_REPO:    ${{ secrets.GITHUB_DATA_REPO }}
+          GITHUB_DATA_REPO:    ${{ secrets.GH_DATA_REPO }}
         run: python agent/job_agent.py
       - uses: actions/upload-artifact@v4
         if: always()
