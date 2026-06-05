@@ -56,7 +56,7 @@ Developed and executed complex computational and statistical analyses using GIS,
 Interfaced with expert witnesses and lawyers to translate technical findings into clear narratives, demonstrating strong stakeholder communication and commitment to clear process documentation.
 Education
 Duke University
-M.S. Electrical Engineering
+M.S. Electrical Engineering 
 2020-2021
 Tufts University
 B.S. Computer Engineering

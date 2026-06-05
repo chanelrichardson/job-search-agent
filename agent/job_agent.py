@@ -76,8 +76,11 @@ def sources_for(criteria):
     return out
 
 # ── Private data repo access ───────────────────────────────────────────────────
-def gh_get_text(path):
-    url = f"https://api.github.com/repos/{GITHUB_DATA_REPO}/contents/{path}"
+def gh_get_bytes(path):
+    """Fetch raw bytes of a file from the private data repo."""
+    import urllib.parse
+    encoded = '/'.join(urllib.parse.quote(p, safe='') for p in path.split('/'))
+    url = f"https://api.github.com/repos/{GITHUB_DATA_REPO}/contents/{encoded}"
     req = urllib.request.Request(url, headers={
         "Authorization": f"token {GITHUB_TOKEN}",
         "Accept": "application/vnd.github+json",
@@ -85,13 +88,82 @@ def gh_get_text(path):
     try:
         with urllib.request.urlopen(req) as r:
             data = json.loads(r.read())
-            b64 = data.get("content","").replace("\n","")
-            return base64.b64decode(b64).decode("utf-8", errors="replace")
+            b64 = data.get("content", "").replace("\n", "")
+            return base64.b64decode(b64)
     except urllib.error.HTTPError as e:
         if e.code == 404: return None
         raise
 
+def extract_text_from_file(file_bytes, filename):
+    """Extract plain text from PDF, DOCX, or TXT bytes."""
+    if not file_bytes:
+        return ""
+    ext = filename.lower().rsplit('.', 1)[-1] if '.' in filename else 'txt'
+
+    if ext == 'pdf':
+        try:
+            # Pure-python PDF text extraction — no dependencies needed
+            import re
+            text = file_bytes.decode('latin-1', errors='replace')
+            # Extract text between BT/ET markers (PDF text objects)
+            chunks = re.findall(r'BT.*?ET', text, re.DOTALL)
+            extracted = []
+            for chunk in chunks:
+                # Get strings in parentheses and hex strings
+                strings = re.findall(r'\(([^)]*?)\)', chunk)
+                for s in strings:
+                    s = s.replace('\\n', ' ').replace('\\r', ' ').replace('\\t', ' ')
+                    s = re.sub(r'\\(.)', r'\1', s)
+                    extracted.append(s)
+            result = ' '.join(extracted)
+            # If we got very little, try a simpler raw text scan
+            if len(result.strip()) < 100:
+                raw = file_bytes.decode('latin-1', errors='replace')
+                result = re.sub(r'[^\x20-\x7E\n]', ' ', raw)
+                result = re.sub(r' {3,}', '\n', result)
+                result = '\n'.join(line.strip() for line in result.splitlines() if len(line.strip()) > 20)
+            return result[:8000]  # cap to avoid token explosion
+        except Exception as e:
+            log.warning(f"PDF extraction failed for {filename}: {e}")
+            return ""
+
+    elif ext == 'docx':
+        try:
+            import zipfile, io
+            from xml.etree import ElementTree as ET
+            zf = zipfile.ZipFile(io.BytesIO(file_bytes))
+            xml = zf.read('word/document.xml')
+            root = ET.fromstring(xml)
+            ns = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
+            paragraphs = []
+            for para in root.iter('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}p'):
+                texts = [t.text or '' for t in para.iter('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}t')]
+                line = ''.join(texts).strip()
+                if line:
+                    paragraphs.append(line)
+            return '\n'.join(paragraphs)[:8000]
+        except Exception as e:
+            log.warning(f"DOCX extraction failed for {filename}: {e}")
+            return ""
+
+    else:
+        # Plain text / TXT
+        try:
+            return file_bytes.decode('utf-8', errors='replace')[:8000]
+        except Exception:
+            return ""
+
+def gh_get_text(path):
+    """Fetch a file and return its text content, handling PDF/DOCX/TXT."""
+    filename = path.split('/')[-1]
+    file_bytes = gh_get_bytes(path)
+    if file_bytes is None:
+        return None
+    return extract_text_from_file(file_bytes, filename)
+
+
 def list_user_slugs():
+    import urllib.parse
     url = f"https://api.github.com/repos/{GITHUB_DATA_REPO}/contents/users"
     req = urllib.request.Request(url, headers={
         "Authorization": f"token {GITHUB_TOKEN}",
