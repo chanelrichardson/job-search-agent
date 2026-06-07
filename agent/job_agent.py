@@ -178,41 +178,112 @@ def load_user(slug):
     txt = gh_get_text(f"users/{slug}/profile.json")
     if not txt: return None
     profile = json.loads(txt)
-    rf = profile.get("resume_file")
-    profile["_resume"] = gh_get_text(f"users/{slug}/{rf}") or "" if rf else ""
 
-    # Load all cover letters into a list
+    # Store resume as base64 for direct Claude API consumption
+    rf = profile.get("resume_file")
+    if rf:
+        resume_bytes = gh_get_bytes(f"users/{slug}/{rf}")
+        if resume_bytes:
+            profile["_resume_b64"] = base64.b64encode(resume_bytes).decode('utf-8')
+            profile["_resume_filename"] = rf
+            profile["_resume_mediatype"] = get_media_type(rf)
+        else:
+            profile["_resume_b64"] = None
+            profile["_resume_filename"] = rf
+            profile["_resume_mediatype"] = None
+    else:
+        profile["_resume_b64"] = None
+        profile["_resume_filename"] = None
+        profile["_resume_mediatype"] = None
+
+    # Store cover letters as base64 list
     cl_files = profile.get("cover_letter_files") or []
-    # Support legacy single cover_letter_file field too
     if not cl_files and profile.get("cover_letter_file"):
         cl_files = [profile["cover_letter_file"]]
-    cl_texts = []
+    cl_docs = []
     for clf in cl_files:
-        text = gh_get_text(f"users/{slug}/{clf}")
-        if text and text.strip():
-            cl_texts.append(text.strip())
-    profile["_cover_letters"] = cl_texts  # list of strings
+        cl_bytes = gh_get_bytes(f"users/{slug}/{clf}")
+        if cl_bytes:
+            cl_docs.append({
+                "b64": base64.b64encode(cl_bytes).decode('utf-8'),
+                "filename": clf,
+                "mediatype": get_media_type(clf),
+            })
+    profile["_cover_letter_docs"] = cl_docs
     return profile
 
-# ── Claude helpers ─────────────────────────────────────────────────────────────
-def claude_with_retry(client, prompt, web=False, max_tokens=2000):
+def get_media_type(filename):
+    """Return the correct MIME type for Claude document API."""
+    ext = filename.lower().rsplit('.', 1)[-1] if '.' in filename else 'txt'
+    return {
+        'pdf':  'application/pdf',
+        'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'doc':  'application/msword',
+        'txt':  'text/plain',
+    }.get(ext, 'text/plain')
+
+
+def claude_with_retry(client, prompt, web=False, max_tokens=2000, docs=None):
     """Call Claude with automatic backoff on rate limit errors."""
     import time
-    delays = [30, 60, 120]  # seconds to wait on each successive 429
+    delays = [30, 60, 120]
     for attempt, delay in enumerate(delays + [None]):
         try:
-            return claude(client, prompt, web=web, max_tokens=max_tokens)
+            return claude(client, prompt, web=web, max_tokens=max_tokens, docs=docs)
         except Exception as e:
             if "rate_limit" in str(e).lower() or "429" in str(e):
                 if delay is None:
-                    raise  # out of retries
+                    raise
                 log.warning(f"  Rate limited — waiting {delay}s before retry {attempt + 1}...")
                 time.sleep(delay)
             else:
                 raise
 
-def claude(client, prompt, web=False, max_tokens=2000):
-    kwargs = dict(model=MODEL, max_tokens=max_tokens, messages=[{"role":"user","content":prompt}])
+def claude(client, prompt, web=False, max_tokens=2000, docs=None):
+    """
+    Call Claude. docs is an optional list of dicts: [{b64, mediatype, filename}]
+    Claude reads PDF and DOCX natively — no text extraction needed.
+    """
+    if docs:
+        content = []
+        for doc in docs:
+            if not doc.get("b64"):
+                continue
+            mt = doc.get("mediatype", "application/pdf")
+            # Claude supports PDF natively; for DOCX send as text/plain fallback
+            if mt in ("application/pdf",):
+                content.append({
+                    "type": "document",
+                    "source": {
+                        "type": "base64",
+                        "media_type": mt,
+                        "data": doc["b64"],
+                    }
+                })
+            else:
+                # For DOCX/DOC, extract text using zipfile (built-in, works well)
+                try:
+                    import zipfile, io
+                    from xml.etree import ElementTree as ET
+                    zf = zipfile.ZipFile(io.BytesIO(base64.b64decode(doc["b64"])))
+                    xml = zf.read('word/document.xml')
+                    root = ET.fromstring(xml)
+                    paras = []
+                    for para in root.iter('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}p'):
+                        texts = [t.text or '' for t in para.iter('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}t')]
+                        line = ''.join(texts).strip()
+                        if line:
+                            paras.append(line)
+                    text = '\n'.join(paras)[:8000]
+                    content.append({"type": "text", "text": f"[{doc.get('filename','document')}]:\n{text}"})
+                except Exception as e:
+                    log.warning(f"DOCX extract failed: {e}")
+        content.append({"type": "text", "text": prompt})
+        messages = [{"role": "user", "content": content}]
+    else:
+        messages = [{"role": "user", "content": prompt}]
+
+    kwargs = dict(model=MODEL, max_tokens=max_tokens, messages=messages)
     if web: kwargs["tools"] = [{"type":"web_search_20250305","name":"web_search"}]
     r = client.messages.create(**kwargs)
     return "".join(b.text for b in r.content if hasattr(b,"text")).strip()
@@ -291,60 +362,60 @@ def parse_json(text):
 
 
 def tailor_resume(client, profile, job):
-    if not profile["_resume"]:
+    if not profile.get("_resume_b64"):
         return "No resume uploaded — visit the signup form to add yours."
-    return claude(client, f"""Tailor this resume for the target role. Keep all facts exact — reorder and reframe, never fabricate.
-
-ORIGINAL RESUME:
-{profile['_resume']}
+    docs = [{"b64": profile["_resume_b64"], "mediatype": profile["_resume_mediatype"], "filename": profile["_resume_filename"]}]
+    return claude(client, f"""The attached document is the candidate's resume. Tailor it for the target role below. Keep all facts exact — reorder and reframe, never fabricate.
 
 TARGET: {job.get('title')} at {job.get('organization')}
 DESCRIPTION: {job.get('description')}
 
-Instructions: Move the most relevant accomplishments to the top. Strengthen the summary to speak to this role. Keep the same length and format. Return the full tailored resume text only.""")
+Instructions: Move the most relevant accomplishments to the top. Strengthen the summary to speak to this role. Keep the same length and format. Return the full tailored resume text only.""", docs=docs)
 
 def write_cover_letter(client, profile, job):
-    samples = profile.get("_cover_letters", [])
-    if samples:
-        # Format multiple samples with separators so Claude can study voice patterns
-        numbered = "\n\n---\n\n".join(
-            f"SAMPLE {i+1}:\n{s}" for i, s in enumerate(samples)
-        )
-        voice_block = f"""
-CANDIDATE'S COVER LETTER SAMPLES ({len(samples)} provided — study these to match their voice, tone, structure, and word choices. Do not copy content, only style):
-{numbered}"""
-    else:
-        voice_block = ""
+    cl_docs = profile.get("_cover_letter_docs", [])
+    resume_doc = {"b64": profile.get("_resume_b64"), "mediatype": profile.get("_resume_mediatype"), "filename": profile.get("_resume_filename")} if profile.get("_resume_b64") else None
 
-    return claude(client, f"""Write a cover letter for {profile['name']} applying to {job.get('title')} at {job.get('organization')}.
+    docs = []
+    if resume_doc:
+        docs.append(resume_doc)
+    docs.extend(cl_docs)
 
-RESUME:
-{profile['_resume'] or 'Not provided — use the why_fit context below'}
-{voice_block}
+    sample_note = ""
+    if cl_docs:
+        sample_note = f"The first {len(docs)-1} attached document(s) are the candidate's existing cover letters — study their voice, tone, sentence rhythm, and word choices. Match this style exactly. Do not copy content, only style."
+
+    prompt = f"""Write a cover letter for {profile['name']} applying to {job.get('title')} at {job.get('organization')}.
+
+{sample_note}
+{"The final attached document is their resume — use specific accomplishments and numbers from it." if resume_doc else "Use the why_fit context below for accomplishments."}
 
 ROLE: {job.get('description')}
 WHY THEY FIT: {job.get('why_fit')}
 
 Requirements:
 - 3 paragraphs: compelling hook, specific value proof with real numbers, confident close
-- Never open with "I am excited to apply" or any cliché variation
-- {"Match the voice, rhythm, and phrasing patterns from the samples above — same person, different role" if samples else "Professional senior executive register"}
+- Never open with "I am excited to apply" or any cliché
+- {"Match voice and phrasing from the cover letter samples attached" if cl_docs else "Professional confident register"}
 - Under 260 words
-- End with the candidate's name only — no "Sincerely," or similar
+- End with the candidate's name only
 
-Return only the cover letter text, nothing else.""")
+Return only the cover letter text."""
+
+    return claude(client, prompt, docs=docs if docs else None)
 
 def prefill_app(client, profile, job):
     try:
         return parse_json(claude(client, f"""Pre-fill a job application for {profile['name']} applying to {job.get('title')} at {job.get('organization')}.
-RESUME: {profile['_resume'] or 'Not provided'}
+RESUME: [See attached resume file: {profile.get('_resume_filename','not uploaded')}]
 Return ONLY valid JSON: {{"desired_salary":"","availability":"2 weeks notice","years_of_experience":"","work_authorization":"Yes — US Citizen","willing_to_relocate":"","why_interested":"2-3 strong sentences","biggest_achievement":"2-3 sentences with real numbers","leadership_style":"2-3 sentences","salary_expectations":"Confident professional answer"}}"""))
     except: return {}
 
 def search_jobs(client, profile, today_str):
     criteria = profile.get("criteria", {})
     name = profile["name"]
-    resume_snippet = (profile["_resume"] or "")[:600]
+    # Resume snippet for search prompt - use filename as fallback label
+    resume_snippet = f"[Resume uploaded: {profile.get('_resume_filename','see attached')}]" if profile.get("_resume_b64") else "No resume provided"
 
     titles_str   = ", ".join(criteria.get("target_titles", []))
     salary_str   = criteria.get("min_salary", "not specified")
@@ -582,7 +653,7 @@ def process_user(client, slug, today_str):
     name = profile.get("name", slug)
     if not should_run(profile.get("schedule","weekly")):
         log.info(f"  Skipping {name} — schedule doesn't match today"); return
-    log.info(f"  Processing: {name} | resume: {'yes' if profile['_resume'] else 'no'} | CLs: {len(profile.get('_cover_letters', []))}")
+    log.info(f"  Processing: {name} | resume: {'yes' if profile.get('_resume_b64') else 'no'} | CLs: {len(profile.get('_cover_letter_docs', []))}")
     try:
         data = search_jobs(client, profile, today_str)
         for j in data.get("jobs",[]):
