@@ -172,29 +172,54 @@ def list_user_slugs():
     try:
         with urllib.request.urlopen(req) as r:
             return [i["name"] for i in json.loads(r.read()) if i["type"]=="dir"]
-    except: return []
+    except Exception as e:
+        log.error(f"Failed to list users: {e}")
+        return []
+
+def list_files_for_slug(slug):
+    """List all files in a user's folder in the data repo — for debugging."""
+    import urllib.parse
+    url = f"https://api.github.com/repos/{GITHUB_DATA_REPO}/contents/users/{slug}"
+    req = urllib.request.Request(url, headers={
+        "Authorization": f"token {GITHUB_TOKEN}",
+        "Accept": "application/vnd.github+json",
+    })
+    try:
+        with urllib.request.urlopen(req) as r:
+            items = json.loads(r.read())
+            return [i["name"] for i in items if i["type"] == "file"]
+    except Exception as e:
+        log.error(f"Failed to list files for {slug}: {e}")
+        return []
 
 def load_user(slug):
     txt = gh_get_text(f"users/{slug}/profile.json")
-    if not txt: return None
+    if not txt:
+        log.error(f"  Could not load profile.json for {slug}")
+        return None
     profile = json.loads(txt)
 
     # Store resume as base64 for direct Claude API consumption
     rf = profile.get("resume_file")
     if rf:
+        log.info(f"  Loading resume: {rf}")
         resume_bytes = gh_get_bytes(f"users/{slug}/{rf}")
         if resume_bytes:
             profile["_resume_b64"] = base64.b64encode(resume_bytes).decode('utf-8')
             profile["_resume_filename"] = rf
             profile["_resume_mediatype"] = get_media_type(rf)
+            log.info(f"  Resume loaded: {len(resume_bytes)} bytes ({rf})")
         else:
             profile["_resume_b64"] = None
             profile["_resume_filename"] = rf
             profile["_resume_mediatype"] = None
+            log.warning(f"  Resume NOT FOUND in data repo: users/{slug}/{rf}")
+            log.warning(f"  Check that this file exists in job-agent-users/users/{slug}/")
     else:
         profile["_resume_b64"] = None
         profile["_resume_filename"] = None
         profile["_resume_mediatype"] = None
+        log.warning(f"  No resume_file set in profile.json for {slug}")
 
     # Store cover letters as base64 list
     cl_files = profile.get("cover_letter_files") or []
@@ -209,7 +234,11 @@ def load_user(slug):
                 "filename": clf,
                 "mediatype": get_media_type(clf),
             })
+            log.info(f"  Cover letter loaded: {clf}")
+        else:
+            log.warning(f"  Cover letter NOT FOUND: users/{slug}/{clf}")
     profile["_cover_letter_docs"] = cl_docs
+    log.info(f"  Files loaded: resume={'yes' if profile['_resume_b64'] else 'NO'}, CLs={len(cl_docs)}/{len(cl_files)}")
     return profile
 
 def get_media_type(filename):
@@ -653,6 +682,10 @@ def process_user(client, slug, today_str):
     name = profile.get("name", slug)
     if not should_run(profile.get("schedule","weekly")):
         log.info(f"  Skipping {name} — schedule doesn't match today"); return
+    # List what's actually in the data repo for this user (for debugging)
+    if GITHUB_DATA_REPO and GITHUB_TOKEN:
+        actual_files = list_files_for_slug(slug)
+        log.info(f"  Files in data repo for {slug}: {actual_files}")
     log.info(f"  Processing: {name} | resume: {'yes' if profile.get('_resume_b64') else 'no'} | CLs: {len(profile.get('_cover_letter_docs', []))}")
     try:
         data = search_jobs(client, profile, today_str)

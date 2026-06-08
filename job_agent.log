@@ -534,3 +534,40 @@ User slug: test_user
 2026-05-31 13:14:22,468 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
 2026-05-31 13:14:26,583 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
 2026-05-31 13:14:28,110 INFO   Sent to crichardson1399@gmail.com
+2026-06-08 11:51:40,952 INFO 
+==================================================
+User slug: cora_richardson
+2026-06-08 11:51:41,123 INFO   Loading resume: cora_chanel_richardson_resume.pdf
+2026-06-08 11:51:41,388 INFO   Resume loaded: 84890 bytes (cora_chanel_richardson_resume.pdf)
+2026-06-08 11:51:41,647 INFO   Cover letter loaded: datakind_cover_letter.docx
+2026-06-08 11:51:41,846 INFO   Cover letter loaded: demos_data_cover_letter.docx
+2026-06-08 11:51:42,005 WARNING   Cover letter NOT FOUND: users/cora_richardson/patreon_cover_letter.docx
+2026-06-08 11:51:42,204 INFO   Cover letter loaded: rand_corporation_cover_letter.docx
+2026-06-08 11:51:42,396 INFO   Cover letter loaded: trip_advisor_cover_letter.docx
+2026-06-08 11:51:42,396 INFO   Files loaded: resume=yes, CLs=4/5
+2026-06-08 11:51:42,577 INFO   Files in data repo for cora_richardson: ['cora_chanel_richardson_resume.pdf', 'datakind_cover_letter.docx', 'demos_data_cover_letter.docx', 'pateron_cover_letter.docx', 'profile.json', 'rand_corporation_cover_letter.docx', 'trip_advisor_cover_letter.docx']
+2026-06-08 11:51:42,578 INFO   Processing: Cora Richardson | resume: yes | CLs: 4
+2026-06-08 11:51:42,588 INFO   Step 1: Identifying target companies...
+2026-06-08 11:51:50,592 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-06-08 11:51:50,620 INFO   Step 1 complete — identified companies
+2026-06-08 11:51:50,620 INFO   Step 2: Searching target companies for open roles...
+2026-06-08 11:52:14,393 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-06-08 11:52:14,454 INFO   Step 2 complete — got 4512 chars
+2026-06-08 11:52:14,454 INFO   Step 3: Formatting as JSON...
+2026-06-08 11:52:14,614 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-06-08 11:52:14,615 INFO Retrying request to /v1/messages in 0.444965 seconds
+2026-06-08 11:52:15,266 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-06-08 11:52:15,267 INFO Retrying request to /v1/messages in 0.811556 seconds
+2026-06-08 11:52:16,245 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-06-08 11:52:16,246 WARNING   Rate limited — waiting 30s before retry 1...
+2026-06-08 11:52:46,508 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 429 Too Many Requests"
+2026-06-08 11:52:46,509 INFO Retrying request to /v1/messages in 51.000000 seconds
+2026-06-08 11:53:52,817 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-06-08 11:53:52,822 INFO   -> Staff Data Scientist, Firefox @ Mozilla Foundation
+2026-06-08 11:54:08,613 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-06-08 11:54:14,940 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-06-08 11:54:16,891 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-06-08 11:54:16,892 INFO   -> Data Scientist, Office of Technology and Data Science @ Urban Institute
+2026-06-08 11:54:32,248 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-06-08 11:54:38,335 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-06-08 11:54:39,968 INFO HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
